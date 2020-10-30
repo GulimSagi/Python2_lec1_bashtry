@@ -65,11 +65,11 @@ while not done:
 
 
     # check the collision with respect to y
-    # rectangle of the player
+    ## rectangle of the player
     rect1 = pygame.Rect(x, y, block_size, block_size)
     collide = False
 
-    # rectangles of the blocks in the map
+    ## rectangles of the blocks in the map
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
@@ -101,10 +101,10 @@ while not done:
     # check the collision with respect to x
     rect1 = pygame.Rect(x, y, block_size, block_size)
 
-    # collide
+    ## collide
     collide = False
 
-    # rectangles of the blocks in the map
+    ## rectangles of the blocks in the map
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
@@ -112,7 +112,6 @@ while not done:
                 if rect1.colliderect(rect2):
                     collide = True
 
-    # print(dy)
     if collide:
         x = save_x
 
@@ -157,4 +156,4 @@ pygame.quit()
 
 #### UPDATE 30.10.2020, 19:17 BY ALIBEK.
 #### THE MAIN UPDATE: now Mario lands correctly and there is no any space between his legs and the groung 
-#### PROBLEM (ACTUALLY IT IS NOT BUT...) : If I set the restriction to bigger values (line 59 and line 60) Mario will go jump through the block --- I DON'T KNOW WHY
+#### PROBLEM (ACTUALLY IT IS NOT BUT...) : If I set the restriction to bigger values (line 59 and line 60) Mario will go jump through the block --- I DON'T KNOW WHY, but have some guesses
