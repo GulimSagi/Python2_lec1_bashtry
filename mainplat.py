@@ -39,17 +39,17 @@ class Enemy:
 # NEED TO UPGRADE1: we should use several types of blocks and for each of them assign unique name in map, for example block from mario is called 'b' in the map.
 # NEED TO UPGRADE2: we should save the map in another file and call it using techniques like "with open" and so on.
 map = [
-    "                                                                                                                      ",
-    "                                                                                                                      ",
-    "                                                                                                                      ",
-    "                                                                                                                      ",
-    "                                                                                                                      ",
-    "                                                                                                                      ",
-    "         bbb  bb                                                                                                             ",
-    "                           b                                                                                           ",
-    "                                                                                                                      ",
+    # "                                                  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                                                                    ",
+    "                                              bbbbb b                                                                       ",
+    "                                          bbbbbb                                                                            ",
+    "                                       bbbbb                                                                               ",
+    "                                   bbbbb                                                                                   ",
+    "                                bbbb     bbbb                                                                                 ",
+    "         bbb   bb            bbbbb            bbbbbb                                                                                     ",
+    "              b             b                                                                                           ",
+    "            bb             bbb                          bbbbbbbbbb                                                                   ",
     "          bbbbb     bbbbbb                 bbbbbbbbbb            bbbbbb                                                   ",
-    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb      bbbbbbbbbbbbbbbbbbbb",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb      bbbbbbbbbbbbbbbbbbbb",
     "                                                                                                                      ",
     "                                                                                                                      ",
 ]
@@ -71,7 +71,7 @@ dx = 0
 gravity = 3
 jump_is_allowed = False
 camera_x = 0
-
+camera_y=0
 mario = Player(0.22*size[0], 300,  'gun')
 
 while not done:
@@ -120,6 +120,9 @@ while not done:
         else:
             dy = 0
 
+    else:
+        jump_is_allowed = False
+
 
     # change x
     mario.x += dx
@@ -146,7 +149,15 @@ while not done:
         camera_x -= 10
     if mario.x + camera_x < size[0]*0.2:
         camera_x += 10
-    
+
+    # moving camera in y direction
+    # if mario.y + camera_y > size[1]*0.8:
+        # camera_y -= 10
+    # if mario.y + camera_y < size[1]*0.5:
+        # camera_y += 10
+    camera_y = -mario.y + size[1] * 0.6
+
+
 
 
     # events
@@ -161,10 +172,10 @@ while not done:
                     jump_is_allowed = False
 
             if event.key == pygame.K_RIGHT:
-                dx = 4
+                dx = 10
             
             if event.key == pygame.K_LEFT:
-                dx = -4
+                dx = -10
                 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT:
@@ -179,8 +190,8 @@ while not done:
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
-                screen.blit(block1, (block_size * j + camera_x, block_size * i))
-    screen.blit(mario_right, (mario.x + camera_x, mario.y))
+                screen.blit(block1, (block_size * j + camera_x, block_size * i + camera_y * 0.5))
+    screen.blit(mario_right, (mario.x + camera_x, mario.y + camera_y * 0.5))
     pygame.display.flip()
     clock.tick(fps)
 
