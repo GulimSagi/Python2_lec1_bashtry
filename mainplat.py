@@ -45,11 +45,11 @@ map = [
     "                                                                                                                      ",
     "                                                                                                                      ",
     "                                                                                                                      ",
-    "         bbb bb                                                                                                             ",
+    "         bbb  bb                                                                                                             ",
     "                           b                                                                                           ",
     "                                                                                                                      ",
     "          bbbbb     bbbbbb                 bbbbbbbbbb            bbbbbb                                                   ",
-    "bbbb bbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb      bbbbbbbbbbbbbbbbbbbb",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb      bbbbbbbbbbbbbbbbbbbb",
     "                                                                                                                      ",
     "                                                                                                                      ",
 ]
@@ -70,8 +70,9 @@ dy = -5
 dx = 0
 gravity = 3
 jump_is_allowed = False
+camera_x = 0
 
-mario = Player(150, 300,  'gun')
+mario = Player(0.22*size[0], 300,  'gun')
 
 while not done:
     screen.fill((30, 140, 255))
@@ -80,8 +81,8 @@ while not done:
     dy = dy + gravity
 
     # restriction to not go throw the walls (when landing with big speed)
-    if dy > 40:
-        dy = 40
+    if dy > 28:
+        dy = 28
 
     # save x and y
     save_x, save_y = mario.x, mario.y
@@ -92,7 +93,7 @@ while not done:
 
     # check the collision with respect to y
     ## rectangle of the player
-    rect1 = pygame.Rect(mario.x, mario.y, block_size, block_size)
+    rect1 = pygame.Rect(mario.x + 5, mario.y, block_size - 8, block_size)
     collide = False
 
     ## rectangles of the blocks in the map
@@ -106,7 +107,6 @@ while not done:
                     r_from_below = block_size * (i + 1)
                     collide = True
 
-
     if collide:
         mario.y = save_y
         if dy > 0:
@@ -114,7 +114,7 @@ while not done:
             mario.y += delta_r
             jump_is_allowed = True
         elif jump_is_allowed == False and dy < 0:
-            delta_r = save_y - r_from_below + 1
+            delta_r = save_y - r_from_below
             mario.y -= delta_r
             dy = 0
         else:
@@ -134,12 +134,19 @@ while not done:
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
-                rect2 = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
+                rect2 = pygame.Rect(block_size * j, block_size * i, block_size- 1, block_size)
                 if rect1.colliderect(rect2):
                     collide = True
 
     if collide:
         mario.x = save_x
+
+    # moving camera in x direction
+    if mario.x + camera_x > size[0]*0.8:
+        camera_x -= 10
+    if mario.x + camera_x < size[0]*0.2:
+        camera_x += 10
+    
 
 
     # events
@@ -172,8 +179,8 @@ while not done:
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
-                screen.blit(block1, (block_size * j, block_size * i))
-    screen.blit(mario_right, (mario.x, mario.y))
+                screen.blit(block1, (block_size * j + camera_x, block_size * i))
+    screen.blit(mario_right, (mario.x + camera_x, mario.y))
     pygame.display.flip()
     clock.tick(fps)
 
