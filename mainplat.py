@@ -72,7 +72,7 @@ gravity = 3
 jump_is_allowed = False
 camera_x = 0
 camera_y=0
-mario = Player(0.22*size[0], 300,  'gun')
+mario = Player(int(0.22*size[0]), 300,  'gun')
 
 while not done:
     screen.fill((30, 140, 255))
@@ -137,12 +137,21 @@ while not done:
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
-                rect2 = pygame.Rect(block_size * j, block_size * i, block_size- 1, block_size)
+                rect2 = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
                 if rect1.colliderect(rect2):
+                    r_from_left = block_size * (j - 1)
+                    r_from_right = block_size * (j + 1)
                     collide = True
 
     if collide:
         mario.x = save_x
+        if dx > 0:
+            delta_r_x = r_from_left - save_x
+            mario.x += delta_r_x
+        
+        if dx < 0:
+            delta_r_x = save_x - r_from_right
+            mario.x -= delta_r_x
 
     # moving camera in x direction
     if mario.x + camera_x > size[0]*0.8:
@@ -155,7 +164,7 @@ while not done:
         # camera_y -= 10
     # if mario.y + camera_y < size[1]*0.5:
         # camera_y += 10
-    camera_y = -mario.y + size[1] * 0.6
+    camera_y = -mario.y + size[1] * 0.5
 
 
 
@@ -190,8 +199,8 @@ while not done:
     for i in range(len(map)):
         for j in range(len(map[i])):
             if map[i][j] == 'b':
-                screen.blit(block1, (block_size * j + camera_x, block_size * i + camera_y * 0.5))
-    screen.blit(mario_right, (mario.x + camera_x, mario.y + camera_y * 0.5))
+                screen.blit(block1, (block_size * j + camera_x, block_size * i + int(camera_y * 0.3)))
+    screen.blit(mario_right, (mario.x + camera_x, mario.y + int(camera_y * 0.3)))
     pygame.display.flip()
     clock.tick(fps)
 
