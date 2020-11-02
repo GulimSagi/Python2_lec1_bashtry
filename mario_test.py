@@ -42,21 +42,29 @@ class Enemy:
         else:
             return False
 
+# Functions
+def load_map():
+    global map
+    map.clear()
+    with open('map.txt', 'r') as f:
+        for line in f:
+            map.append(line)
+
 # Level
-map = [
-    "                                    ccccc                                                                             ",
-    "                            cccc    bbbbb                                                                             ",
-    "                            bbbb                                                                                      ",
-    "                       ccc                ccccccc                                                                     ",
-    "         ccc  ccc      bbb                bbbbbbb                                                                     ",
-    "         bbb  bbb               ccc       b ccc b      cccccc                                                         ",
-    "                                bbb       b     b      bbbbbb                                                         ",
-    "          ccccc    cccccc                 cccccccccc            cccccc                                                ",
-    "     cccccbbbbbccccbbbbbbcccccc      cccc bbbbbbbbbbccccc ccccccbbbbbbcccc                                            ",
-    "bbbb bbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb     bbbbbbbbbbbbbbbbbbbb   ",
-    "                                                                                                                      ",
-    "                                                                                                                      ",
-]
+# map = [
+#     "                                    ccccc                                                                             ",
+#     "                            cccc    bbbbb                                                                             ",
+#     "                            bbbb                                                                                      ",
+#     "                       ccc                ccccccc                                                                     ",
+#     "         ccc  ccc      bbb                bbbbbbb                                                                     ",
+#     "         bbb  bbb               ccc       b ccc b      cccccc                                                         ",
+#     "                                bbb       b     b      bbbbbb                                                         ",
+#     "          ccccc    cccccc                 cccccccccc            cccccc                                                ",
+#     "     cccccbbbbbccccbbbbbbcccccc      cccc bbbbbbbbbbccccc ccccccbbbbbbcccc                                            ",
+#     "bbbb bbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb     bbbbbbbbbbbbbbbbbbbb   ",
+#     "                                                                                                                      ",
+#     "                                                                                                                      ",
+# ]
 
 state_start = "welcome"
 state_play = "play"
@@ -94,6 +102,7 @@ block1 = pygame.transform.scale(block1, (block_size, block_size))
 coin = pygame.transform.scale(coin, (coin_size, coin_size))
 
 # game variables
+map = []
 gravity = 3
 done = False
 state = state_start
@@ -102,6 +111,7 @@ while not done:
     screen.fill((30, 140, 255))
 
     if state == state_start:
+        load_map()
         camera_x = 0
         camera_y = 0
         player = Player(100, 0, 50, 50, 'gun')
@@ -182,10 +192,11 @@ while not done:
             camera_x = camera_x - 10
         if player.x + camera_x < size[0]*0.3:
             camera_x = camera_x + 10
-        if player.y + camera_y > size[1]*0.1:
-            camera_y = camera_y - 10
-        if player.y + camera_y < size[1]*0.6:
-            camera_y = camera_y + 10
+        # if player.y + camera_y > size[1]*0.1:
+        #     camera_y = camera_y - 10
+        # if player.y + camera_y < size[1]*0.6:
+        #     camera_y = camera_y + 10
+        camera_y = -player.y + size[1] * 0.5
 
         # events
         for event in pygame.event.get():
@@ -199,11 +210,11 @@ while not done:
                         player.jump_is_allowed = False
 
                 if event.key == pygame.K_RIGHT:
-                    player.h_speed = 8
+                    player.h_speed = 10
                     player.look_left = False
 
                 if event.key == pygame.K_LEFT:
-                    player.h_speed = -8
+                    player.h_speed = -10
                     player.look_left = True
 
             if event.type == pygame.KEYUP:

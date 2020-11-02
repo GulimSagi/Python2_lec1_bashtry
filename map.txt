@@ -1,0 +1,10 @@
+                                    ccccc
+                            cccc    bbbbb
+                            bbbb
+                       ccc                ccccccc
+         ccc  ccc      bbb                bbbbbbb
+         bbb  bbb               ccc       b ccc b      cccccc
+                                bbb       b     b      bbbbbb
+          ccccc    cccccc                 cccccccccc            cccccc
+     cccccbbbbbccccbbbbbbcccccc      cccc bbbbbbbbbbccccc ccccccbbbbbbcccc
+bbbb bbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb                                                                                                                                                                                                                                  ",
