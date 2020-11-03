@@ -4,7 +4,6 @@ pygame.init()
 
 #Classes
 class Player():
-
     def __init__(self,image_right, image_left, x, y, w, h):
         self.image_right = image_right
         self.image_left = image_left
@@ -12,6 +11,40 @@ class Player():
         self.y = y
         self.w = w
         self.h = h
+        self.old_x = 0
+        self.old_y = 0
+        self.v_speed = -5
+        self.h_speed = 0
+        self.jump_height = 30
+        self.jump_is_allowed = False
+        self.look_left = False
+        self.XP = 100
+        self.points = 0
+        self.get_coins = False
+
+    def death(self):
+        if self.XP == 0:
+            return True
+        else:
+            return False
+
+    def add_points(self):
+        self.points += 1
+
+    def get_points(self):
+        return self.points
+
+
+class Enemy:
+    def __init__(self,image_right, image_left, x, y, w, h):
+        self.image_right = image_right
+        self.image_left = image_left
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.old_x = 0
+        self.old_y = 0
         self.v_speed = -5
         self.h_speed = 0
         self.jump_height = 30
@@ -31,19 +64,6 @@ class Player():
 
     def get_points(self):
         return self.points
-
-
-class Enemy:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-        self.XP = 100
-
-    def death(self):
-        if self.XP==0:
-            return True
-        else:
-            return False
 
 class Weapon:
     def __init__(self, image_right, image_left, x, y):
@@ -73,6 +93,109 @@ def load_game_map():
         for line in f:
             game_map.append(line)
 
+def check_collide_y(x, y, old_x, old_y, v_speed, jump_height, block_size, trampoline_h, jump_is_allowed):
+    # check the collision with respect to y
+    ## rectangle of the player
+    rect_character = pygame.Rect(x + 5, y, block_size - 8, block_size)
+    collide = False
+    get_coins = False
+    death = False
+
+    ## rectangles of the blocks in the game_map
+    for i in range(len(game_map)):
+        for j in range(len(game_map[i])):
+            if game_map[i][j] == 'g' or game_map[i][j] == 'm' or game_map[i][j] == 'b':
+                rect_block = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
+                if rect_character.colliderect(rect_block):
+                    # we need them to eluminate the residual distances
+                    r_from_up = block_size * (i - 1)
+                    r_from_below = block_size * (i + 1)
+                    collide = True
+                    jump_height = 30
+            if game_map[i][j] == 't':
+                rect_tramp = pygame.Rect(block_size * j , trampoline_h + block_size * i, block_size, trampoline_h)
+                if rect_character.colliderect(rect_tramp):
+                    # we need them to eluminate the residual distances
+                    # r_from_up = block_size * (i - 1) + trampoline_h
+                    # r_from_below = block_size * (i + 1)
+                    # collide = True
+                    jump_height = 40
+            if game_map[i][j] == 'c':
+                rect_coin = pygame.Rect(coin_size//2 + block_size * j, coin_size//2 + block_size * i, coin_size, coin_size)
+                if rect_character.colliderect(rect_coin):
+                    get_coins = True
+                    ### after that player took the coin, the line below removes it from the map
+                    game_map[i] = game_map[i][:j] + " " + game_map[i][j+1:]
+
+    if collide:
+        y = old_y
+        if v_speed > 0:
+            delta_r = r_from_up - old_y
+            y += delta_r
+            jump_is_allowed = True
+        elif jump_is_allowed == False and v_speed < 0:
+            delta_r = old_y - r_from_below
+            y -= delta_r
+            v_speed = 0
+        else:
+            v_speed = 0
+
+    else:
+        jump_is_allowed = False
+
+    if y > size[1]:
+        death = True
+
+    return x, y, v_speed, jump_height, death, jump_is_allowed, get_coins
+
+
+def check_collide_x(x, y, old_x, old_y, h_speed, jump_height, block_size, trampoline_h, jump_is_allowed):
+    rect_character = pygame.Rect(x, y, block_size, block_size)
+
+    ## collide
+    collide = False
+    get_coins = False
+
+    ## rectangles of the blocks in the game_map
+    for i in range(len(game_map)):
+        for j in range(len(game_map[i])):
+            if game_map[i][j] == 'g' or game_map[i][j] == 'm' or game_map[i][j] == 'b':
+                rect_block = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
+                if rect_character.colliderect(rect_block):
+                    r_from_left = block_size * (j - 1)
+                    r_from_right = block_size * (j + 1)
+                    collide = True
+                    jump_height = 30
+            if game_map[i][j] == 't':
+                rect_tramp = pygame.Rect(block_size * j, trampoline_h + block_size * i, block_size, trampoline_h)
+                if rect_character.colliderect(rect_tramp):
+                    # we need them to eluminate the residual distances
+                    # r_from_left = block_size * (j - 1)
+                    # r_from_right = block_size * (j + 1)
+                    # collide = True
+                    jump_height = 40
+            if game_map[i][j] == 'c':
+                rect_coin = pygame.Rect(coin_size//2 + block_size * j, coin_size//2 + block_size * i, coin_size, coin_size)
+                if rect_character.colliderect(rect_coin):
+                    get_coins = True
+                    ### after that player took the coin, the line below removes it from the map
+                    game_map[i] = game_map[i][:j] + " " + game_map[i][j + 1:]
+
+    if collide:
+        x = old_x
+        if h_speed > 0:
+            delta_r_x = r_from_left - old_x
+            x += delta_r_x
+        
+        if h_speed < 0:
+            delta_r_x = old_x - r_from_right
+            x -= delta_r_x
+
+    return x, y, h_speed, jump_height, jump_is_allowed, get_coins
+    
+
+    
+
 
 # NEED TO UPGRADE1: we should use several types of blocks and for each of them assign unique name in game_map, for example block from mario is called 'b' in the game_map.
 
@@ -86,7 +209,7 @@ fps = 60
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 done = False
-block_size = 50
+block_size = 52
 gun_size = block_size*2
 coin_size = block_size//2
 trampoline_h = block_size//2
@@ -113,6 +236,8 @@ trampoline = pygame.image.load('trampoline.png')
 coin = pygame.image.load('coin.png')
 gun_right = pygame.image.load('gun_right.png')
 gun_left = pygame.image.load('gun_left.png')
+enemy1_left = pygame.image.load('enemy1_left.png')
+enemy1_right = pygame.image.load('enemy1_right.png')
 
 # standartize the size
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
@@ -124,6 +249,8 @@ trampoline = pygame.transform.scale(trampoline, (block_size, trampoline_h))
 coin = pygame.transform.scale(coin, (coin_size, coin_size))
 gun_right = pygame.transform.scale(gun_right, (gun_size, gun_size))
 gun_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
+enemy1_left = pygame.transform.scale(enemy1_left, (block_size, block_size))
+enemy1_right = pygame.transform.scale(enemy1_right, (block_size, block_size))
 
 
 # game variables
@@ -139,8 +266,10 @@ while not done:
         camera_x = 0
         camera_y = 0
         player = Player(hero_right, hero_left, 100, 300, block_size, block_size)
+        enemy1 = Enemy(enemy1_right, enemy1_left, 500, 200, block_size, block_size)
         gun = Weapon(gun_right, gun_left, player.x, player.y)
         screen.blit(text_start, (50, 50))
+        charachters = [player, enemy1]
         
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
@@ -148,127 +277,39 @@ while not done:
                     state = state_play
 
     if state == state_play:
-        # change player.v_speed (gravity)
-        player.v_speed = player.v_speed + gravity
+        for charachter in charachters:
 
-        # restriction to not go throw the walls (when landing with big speed)
-        if player.v_speed > 28:
-            player.v_speed = 28
+            # change player.v_speed (gravity)
+            charachter.v_speed = charachter.v_speed + gravity
+
+            # restriction to not go throw the walls (when landing with big speed)
+            if charachter.v_speed > 25:
+                charachter.v_speed = 25
 
         # save x and y
-        save_x, save_y = player.x, player.y
+        for charachter in charachters:
+            charachter.old_x, charachter.old_y = charachter.x, charachter.y
 
-        # changing y
-        player.y += player.v_speed
+            
+            charachter.y += charachter.v_speed
+            charachter.x, charachter.y, charachter.v_speed, charachter.jump_height, charachter.death, charachter.jump_is_allowed, charachter.add_pionts = check_collide_y(charachter.x, charachter.y, charachter.old_x, charachter.old_y, charachter.v_speed, charachter.jump_height, block_size, trampoline_h, charachter.jump_is_allowed)        
+            if charachter == player and charachter.get_coins == True:
+                charachter.add_points()
+            if charachter.death == True:
+                state = state_game_over
 
-
-        # check the collision with respect to y
-        ## rectangle of the player
-        player.rect = pygame.Rect(player.x, player.y, block_size, block_size)
-        rect_gun = pygame.Rect(player.x, player.y, block_size, block_size)
-        collide = False
-
-        ## rectangles of the blocks in the game_map
-        for i in range(len(game_map)):
-            for j in range(len(game_map[i])):
-                if game_map[i][j] == 'g' or game_map[i][j] == 'm' or game_map[i][j] == 'b':
-                    rect_block = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
-                    if player.rect.colliderect(rect_block):
-                        # we need them to eluminate the residual distances
-                        r_from_up = block_size * (i - 1)
-                        r_from_below = block_size * (i + 1)
-                        collide = True
-                        player.jump_height = 30
-                if game_map[i][j] == 't':
-                    rect_tramp = pygame.Rect(block_size * j , trampoline_h + block_size * i, block_size, trampoline_h)
-                    if player.rect.colliderect(rect_tramp):
-                        # we need them to eluminate the residual distances
-                        r_from_up = block_size * (i - 1) + trampoline_h
-                        r_from_below = block_size * (i + 1)
-                        collide = True
-                        player.jump_height = 40
-                if game_map[i][j] == 'c':
-                    rect_coin = pygame.Rect(coin_size//2 + block_size * j, coin_size//2 + block_size * i, coin_size, coin_size)
-                    if player.rect.colliderect(rect_coin):
-                        player.add_points()
-                        ### after that player took the coin, the line below removes it from the map
-                        game_map[i] = game_map[i][:j] + " " + game_map[i][j+1:]
-
-        if collide:
-            player.y = save_y
-            if player.v_speed > 0:
-                delta_r = r_from_up - save_y
-                player.y += delta_r
-                player.jump_is_allowed = True
-            elif player.jump_is_allowed == False and player.v_speed < 0:
-                delta_r = save_y - r_from_below
-                player.y -= delta_r
-                player.v_speed = 0
-            else:
-                player.v_speed = 0
-
-        else:
-            player.jump_is_allowed = False
-
-        if player.y > size[1]:
-            state = state_game_over
-
-        # change x
-        player.x += player.h_speed
-        
-        # check the collision with respect to x
-        player.rect = pygame.Rect(player.x, player.y, player.w, player.h)
-        rect_gun = pygame.Rect(player.x, player.y, block_size, block_size)
-
-        ## collide
-        collide = False
-
-        ## rectangles of the blocks in the game_map
-        for i in range(len(game_map)):
-            for j in range(len(game_map[i])):
-                if game_map[i][j] == 'g' or game_map[i][j] == 'm' or game_map[i][j] == 'b':
-                    rect_block = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
-                    if player.rect.colliderect(rect_block):
-                        # r_from_left = block_size * (j - 1)
-                        # r_from_right = block_size * (j + 1)
-                        collide = True
-                        player.jump_height = 30
-                if game_map[i][j] == 't':
-                    rect_tramp = pygame.Rect(block_size * j, trampoline_h + block_size * i, block_size, trampoline_h)
-                    if player.rect.colliderect(rect_tramp):
-                        # we need them to eluminate the residual distances
-                        # r_from_left = block_size * (j - 1)
-                        # r_from_right = block_size * (j + 1)
-                        collide = True
-                        player.jump_height = 40
-                if game_map[i][j] == 'c':
-                    rect_coin = pygame.Rect(coin_size//2 + block_size * j, coin_size//2 + block_size * i, coin_size, coin_size)
-                    if player.rect.colliderect(rect_coin):
-                        player.add_points()
-                        ### after that player took the coin, the line below removes it from the map
-                        game_map[i] = game_map[i][:j] + " " + game_map[i][j + 1:]
-
-        if collide:
-            player.x = save_x
-            # if player.h_speed > 0:
-            #     delta_r_x = r_from_left - save_x
-            #     player.x += delta_r_x
-            #
-            # if player.h_speed < 0:
-            #     delta_r_x = save_x - r_from_right
-            #     player.x -= delta_r_x
+            charachter.x += charachter.h_speed
+            charachter.x, charachter.y, charachter.h_speed, charachter.jump_height, charachter.jump_is_allowed, charachter.get_coins = check_collide_x(charachter.x, charachter.y, charachter.old_x, charachter.old_y, charachter.h_speed, charachter.jump_height, block_size, trampoline_h, charachter.jump_is_allowed)        
+            if charachter.get_coins == True:
+                charachter.add_points()
 
         # moving camera in x direction
-        if player.x + camera_x > size[0]*0.8:
+        if player.x + camera_x > size[0]*0.65:
             camera_x -= 10
-        if player.x + camera_x < size[0]*0.2:
+        if player.x + camera_x < size[0]*0.35:
             camera_x += 10
 
         # moving camera in y direction
-        # if player.y + camera_y > size[1]*0.8:
-            # camera_y -= 10
-        # if player.y + camera_y < size[1]*0.5:
-            # camera_y += 10
         camera_y = -player.y + size[1] * 0.5
 
         # blitting the blocks according to the game_map
@@ -287,11 +328,13 @@ while not done:
 
         if player.look_left:
             screen.blit(player.image_left, (player.x + camera_x, player.y + int(camera_y * 0.3)))
-            screen.blit(gun.image_left, (player.x - block_size/2 + camera_x, player.y - block_size/2 + int(camera_y * 0.3)))
+            screen.blit(gun.image_left, (player.x - block_size//2 + camera_x, player.y - block_size//2 + int(camera_y * 0.3)))
         else:
             screen.blit(player.image_right, (player.x + camera_x, player.y + int(camera_y * 0.3)))
-            screen.blit(gun.image_right, (player.x - block_size/2 + camera_x, player.y - block_size/2 + int(camera_y * 0.3)))
+            screen.blit(gun.image_right, (player.x - block_size//2 + camera_x, player.y - block_size//2 + int(camera_y * 0.3)))
 
+
+        screen.blit(enemy1.image_left, (enemy1.x + camera_x, enemy1.y + int(camera_y * 0.3)))
         screen.blit(coin, (10, 10), )
         score = font.render(f"{player.get_points()}", True, (255,204,0))
         screen.blit(score, (40, -10))
