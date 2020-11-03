@@ -1,21 +1,24 @@
 import pygame
+import math
 pygame.init()
 
-
 #Classes
-class Player:
-    def __init__(self, x, y, w, h, gun):
+class Player():
+
+    def __init__(self,image_right, image_left, x, y, w, h):
+        self.image_right = image_right
+        self.image_left = image_left
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.v_speed = -5
         self.h_speed = 0
+        self.jump_height = 30
         self.jump_is_allowed = False
         self.look_left = False
         self.XP = 100
         self.points = 0
-        self.gun = gun
 
     def death(self):
         if self.XP == 0:
@@ -31,17 +34,36 @@ class Player:
 
 
 class Enemy:
-    def __init__(self,x,y,gun):
+    def __init__(self,x,y):
         self.x = x
         self.y = y
         self.XP = 100
-        self.gun = gun
 
     def death(self):
         if self.XP==0:
             return True
         else:
             return False
+
+class Weapon:
+    def __init__(self, image_right, image_left, x, y):
+        self.x = x
+        self.y = y
+        self.look_left = False
+        self.image_right = image_right
+        self.image_left = image_left
+        self.rect = self.image_right.get_rect(center=(self.x, self.y))
+
+    def rotate(self, image):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        rel_x, rel_y = mouse_x - self.x, mouse_y - self.y
+        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        if image == gun.image_left:
+            self.image = pygame.transform.rotate(image, int(-angle))
+        else:
+            self.image = pygame.transform.rotate(image, int(angle))
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
 
 # Functions
 def load_game_map():
@@ -53,23 +75,6 @@ def load_game_map():
 
 
 # NEED TO UPGRADE1: we should use several types of blocks and for each of them assign unique name in game_map, for example block from mario is called 'b' in the game_map.
-# NEED TO UPGRADE2: we should save the game_map in another file and call it using techniques like "with open" and so on.
-
-# game_map = [
-#     # "                                                  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                                                                    ",
-#     "                                              bbbbb b                                                                       ",
-#     "                                          bbbbbb                                                                            ",
-#     "                                       bbbbb                                                                               ",
-#     "                                   bbbbb                                                                                   ",
-#     "                                bbbb     bbbb                                                                                 ",
-#     "         bbb   bb            bbbbb            bbbbbb                                                                                     ",
-#     "              b             b                                                                                           ",
-#     "            bb             bbb                          bbbbbbbbbb                                                                   ",
-#     "          bbbbb     bbbbbb                 bbbbbbbbbb            bbbbbb                                                   ",
-#     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb      bbbbbbbbbbbbbbbbbbbb",
-#     "                                                                                                                      ",
-#     "                                                                                                                      ",
-# ]
 
 state_start = "welcome"
 state_play = "play"
@@ -81,8 +86,10 @@ fps = 60
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 done = False
-block_size = 42
-coin_size = block_size
+block_size = 50
+gun_size = block_size*2
+coin_size = block_size//2
+trampoline_h = block_size//2
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -90,25 +97,33 @@ GRAY = (128, 128, 128)
 GREEN = (0, 128, 0)
 RED = (200, 0, 0)
 
-
 pygame.font.init()
-font = pygame.font.SysFont('Comic Sans MS', 50, True, False)
+font = pygame.font.SysFont('Comic Sans MS', 40, True, False)
 text_start = font.render("Press space to start", True, RED)
 text_game_over = font.render("Game Over", True, RED)
-
 
 # load images
 # NEED TO UPGRADE: to use our own pictures (more than 5, to make it more realistic (I mean, when he is walking and so on))
 hero_right = pygame.image.load('mario_right.png')
 hero_left = pygame.image.load('mario_left.png')
-block1 = pygame.image.load('mario_block.png')
+ground = pygame.image.load('ground.png')
+mud = pygame.image.load('mud.png')
+brick = pygame.image.load('brick.png')
+trampoline = pygame.image.load('trampoline.png')
 coin = pygame.image.load('coin.png')
+gun_right = pygame.image.load('gun_right.png')
+gun_left = pygame.image.load('gun_left.png')
 
 # standartize the size
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
 hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
-block1 = pygame.transform.scale(block1, (block_size, block_size))
+ground = pygame.transform.scale(ground, (block_size, block_size))
+mud = pygame.transform.scale(mud, (block_size, block_size))
+brick = pygame.transform.scale(brick, (block_size, block_size))
+trampoline = pygame.transform.scale(trampoline, (block_size, trampoline_h))
 coin = pygame.transform.scale(coin, (coin_size, coin_size))
+gun_right = pygame.transform.scale(gun_right, (gun_size, gun_size))
+gun_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
 
 
 # game variables
@@ -123,7 +138,8 @@ while not done:
         load_game_map()
         camera_x = 0
         camera_y = 0
-        player = Player(int(0.22*size[0]), 300, block_size, block_size, 'gun')
+        player = Player(hero_right, hero_left, 100, 300, block_size, block_size)
+        gun = Weapon(gun_right, gun_left, player.x, player.y)
         screen.blit(text_start, (50, 50))
         
         for event in pygame.event.get():
@@ -148,22 +164,32 @@ while not done:
 
         # check the collision with respect to y
         ## rectangle of the player
-        rect_player = pygame.Rect(player.x + 5, player.y, block_size - 8, block_size)
+        player.rect = pygame.Rect(player.x, player.y, block_size, block_size)
+        rect_gun = pygame.Rect(player.x, player.y, block_size, block_size)
         collide = False
 
         ## rectangles of the blocks in the game_map
         for i in range(len(game_map)):
             for j in range(len(game_map[i])):
-                if game_map[i][j] == 'b':
+                if game_map[i][j] == 'g' or game_map[i][j] == 'm' or game_map[i][j] == 'b':
                     rect_block = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
-                    if rect_player.colliderect(rect_block):
+                    if player.rect.colliderect(rect_block):
                         # we need them to eluminate the residual distances
                         r_from_up = block_size * (i - 1)
                         r_from_below = block_size * (i + 1)
                         collide = True
+                        player.jump_height = 30
+                if game_map[i][j] == 't':
+                    rect_tramp = pygame.Rect(block_size * j , trampoline_h + block_size * i, block_size, trampoline_h)
+                    if player.rect.colliderect(rect_tramp):
+                        # we need them to eluminate the residual distances
+                        r_from_up = block_size * (i - 1) + trampoline_h
+                        r_from_below = block_size * (i + 1)
+                        collide = True
+                        player.jump_height = 40
                 if game_map[i][j] == 'c':
-                    rect_coin = pygame.Rect(block_size * j, block_size * i, coin_size, coin_size)
-                    if rect_player.colliderect(rect_coin):
+                    rect_coin = pygame.Rect(coin_size//2 + block_size * j, coin_size//2 + block_size * i, coin_size, coin_size)
+                    if player.rect.colliderect(rect_coin):
                         player.add_points()
                         ### after that player took the coin, the line below removes it from the map
                         game_map[i] = game_map[i][:j] + " " + game_map[i][j+1:]
@@ -191,7 +217,8 @@ while not done:
         player.x += player.h_speed
         
         # check the collision with respect to x
-        rect_player = pygame.Rect(player.x, player.y, player.w, player.h)
+        player.rect = pygame.Rect(player.x, player.y, player.w, player.h)
+        rect_gun = pygame.Rect(player.x, player.y, block_size, block_size)
 
         ## collide
         collide = False
@@ -199,29 +226,37 @@ while not done:
         ## rectangles of the blocks in the game_map
         for i in range(len(game_map)):
             for j in range(len(game_map[i])):
-                if game_map[i][j] == 'b':
+                if game_map[i][j] == 'g' or game_map[i][j] == 'm' or game_map[i][j] == 'b':
                     rect_block = pygame.Rect(block_size * j, block_size * i, block_size, block_size)
-                    if rect_player.colliderect(rect_block):
-                        r_from_left = block_size * (j - 1)
-                        r_from_right = block_size * (j + 1)
+                    if player.rect.colliderect(rect_block):
+                        # r_from_left = block_size * (j - 1)
+                        # r_from_right = block_size * (j + 1)
                         collide = True
-
+                        player.jump_height = 30
+                if game_map[i][j] == 't':
+                    rect_tramp = pygame.Rect(block_size * j, trampoline_h + block_size * i, block_size, trampoline_h)
+                    if player.rect.colliderect(rect_tramp):
+                        # we need them to eluminate the residual distances
+                        # r_from_left = block_size * (j - 1)
+                        # r_from_right = block_size * (j + 1)
+                        collide = True
+                        player.jump_height = 40
                 if game_map[i][j] == 'c':
-                    rect_coin = pygame.Rect(block_size * j, block_size * i, coin_size, coin_size)
-                    if rect_player.colliderect(rect_coin):
+                    rect_coin = pygame.Rect(coin_size//2 + block_size * j, coin_size//2 + block_size * i, coin_size, coin_size)
+                    if player.rect.colliderect(rect_coin):
                         player.add_points()
                         ### after that player took the coin, the line below removes it from the map
                         game_map[i] = game_map[i][:j] + " " + game_map[i][j + 1:]
 
         if collide:
             player.x = save_x
-            if player.h_speed > 0:
-                delta_r_x = r_from_left - save_x
-                player.x += delta_r_x
-            
-            if player.h_speed < 0:
-                delta_r_x = save_x - r_from_right
-                player.x -= delta_r_x
+            # if player.h_speed > 0:
+            #     delta_r_x = r_from_left - save_x
+            #     player.x += delta_r_x
+            #
+            # if player.h_speed < 0:
+            #     delta_r_x = save_x - r_from_right
+            #     player.x -= delta_r_x
 
         # moving camera in x direction
         if player.x + camera_x > size[0]*0.8:
@@ -236,55 +271,67 @@ while not done:
             # camera_y += 10
         camera_y = -player.y + size[1] * 0.5
 
+        # blitting the blocks according to the game_map
+        for i in range(len(game_map)):
+            for j in range(len(game_map[i])):
+                if game_map[i][j] == 'g':
+                    screen.blit(ground, (block_size * j + camera_x, block_size * i + int(camera_y * 0.3)))
+                if game_map[i][j] == 'm':
+                    screen.blit(mud, (block_size * j + camera_x, block_size * i + int(camera_y * 0.3)))
+                if game_map[i][j] == 'b':
+                    screen.blit(brick, (block_size * j + camera_x, block_size * i + int(camera_y * 0.3)))
+                if game_map[i][j] == 't':
+                    screen.blit(trampoline, (block_size * j + camera_x, trampoline_h + block_size * i + int(camera_y * 0.3)))
+                if game_map[i][j] == 'c':
+                    screen.blit(coin, (coin_size//2 + block_size * j + camera_x, coin_size//2 + block_size * i + int(camera_y * 0.3)))
 
+        if player.look_left:
+            screen.blit(player.image_left, (player.x + camera_x, player.y + int(camera_y * 0.3)))
+            screen.blit(gun.image_left, (player.x - block_size/2 + camera_x, player.y - block_size/2 + int(camera_y * 0.3)))
+        else:
+            screen.blit(player.image_right, (player.x + camera_x, player.y + int(camera_y * 0.3)))
+            screen.blit(gun.image_right, (player.x - block_size/2 + camera_x, player.y - block_size/2 + int(camera_y * 0.3)))
 
+        screen.blit(coin, (10, 10), )
+        score = font.render(f"{player.get_points()}", True, (255,204,0))
+        screen.blit(score, (40, -10))
 
         # events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if gun.look_left:
+                        gun.rotate(gun.image_left)
+                    else:
+                        gun.rotate(gun.image_right)
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
-                    if player.jump_is_allowed== True:
-                        player.v_speed = -30
-                        player.jump_is_allowed= False
-                        
+                    if player.jump_is_allowed == True:
+                        player.v_speed = -player.jump_height
+                        player.jump_is_allowed = False
+
                 if event.key == pygame.K_LEFT:
                     player.h_speed = -10
                     player.look_left = True
+                    gun.look_left = True
 
                 if event.key == pygame.K_RIGHT:
                     player.h_speed = 10
                     player.look_left = False
-                
-                    
+                    gun.look_left = False
+
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
                     if player.h_speed > 0:
                         player.h_speed = 0
-                
+
                 if event.key == pygame.K_LEFT:
                     if player.h_speed < 0:
                         player.h_speed = 0
-
-        # blitting the blocks according to the game_map
-        for i in range(len(game_map)):
-            for j in range(len(game_map[i])):
-                if game_map[i][j] == 'b':
-                    screen.blit(block1, (block_size * j + camera_x, block_size * i + int(camera_y * 0.3)))
-                if game_map[i][j] == 'c':
-                    screen.blit(coin, (block_size * j + camera_x, block_size * i + int(camera_y * 0.3)))
-
-        if player.look_left:
-            screen.blit(hero_left, (player.x + camera_x, player.y + int(camera_y * 0.3)))
-        else:
-            screen.blit(hero_right, (player.x + camera_x, player.y + int(camera_y * 0.3)))
-
-        screen.blit(coin, (10, 10))
-        score = font.render(f"{player.get_points()}", True, (255,204,0))
-        screen.blit(score, (60, 0))
-        # screen.blit(mario_right, (player.x + camera_x, player.y + int(camera_y * 0.3)))
 
     if state == state_game_over:
         screen.blit(text_game_over, (50, 50))

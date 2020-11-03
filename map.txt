@@ -1,10 +1,13 @@
+
                                     ccccc
-                            cccc    bbbbb
-                            bbbb
-                       ccc                ccccccc
-         ccc  ccc      bbb                bbbbbbb
-         bbb  bbb               ccc       b ccc b      cccccc
-                                bbb       b     b      bbbbbb
-          ccccc    cccccc                 cccccccccc            cccccc
-     cccccbbbbbccccbbbbbbcccccc      cccc bbbbbbbbbbccccc ccccccbbbbbbcccc
-bbbb bbbbbbbbbbbbbbbbbbbbbbbbbb      bbbb bbbbbbbbbbbbbbb bbbbbbbbbbbbbbbb    bbbbbbbbbbbb                                                                                                                                                                                                                                  ",
+                            cccc    ggggg
+                            gggg            ccc
+                                           cbbbc
+                       ccc                cbbbbbc
+         ccc  ccc      ggg                bbbbbbb
+         ggg  ggg               ccc       bcccccb      cccccc
+                                ggg       b     b      gggggg
+          ccccc    cccccc                 bccccccccc            cccccc
+ t   cccccgggggccccggggggcccccc      ccct ggggggggggccccc ccccccggggggcccc
+gggg gggggmmmmmggggmmmmmmgggggg      gggg mmmmmmmmmmggggg ggggggmmmmmmgggg    gggggggg
+mmmm mmmmmmmmmmmmmmmmmmmmmmmmmm      mmmm                                                                                                                                                                                                                       ",
