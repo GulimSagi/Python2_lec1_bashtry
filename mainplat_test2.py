@@ -35,6 +35,7 @@ gun_right = pygame.image.load('gun_right.png')
 gun_left = pygame.image.load('gun_left.png')
 enemy1_left = pygame.image.load('enemy1_left.png')
 enemy1_right = pygame.image.load('enemy1_right.png')
+bullet = pygame.image.load('bullet.png')
 
 ground = pygame.transform.scale(ground, (block_size, block_size))
 mud = pygame.transform.scale(mud, (block_size, block_size))
@@ -62,6 +63,8 @@ class Player(pygame.sprite.Sprite):
         self.health = 100
         self.points = 0
         self.image = pygame.transform.scale(hero_right, (block_size, block_size))
+        #self.image = pygame.Surface((50,40))
+        #self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.x = 0
         self.y = 0
@@ -85,7 +88,7 @@ class Player(pygame.sprite.Sprite):
         if self.v_speed > 25:
             self.v_speed = 25
         keystate = pygame.key.get_pressed()
-        if keystate[pygame.K_SPACE]:
+        if keystate[pygame.K_SPACE] or keystate[pygame.K_UP]:
             if self.jump_is_allowed:
                 self.v_speed = -self.jump_height
                 self.jump_is_allowed = False
@@ -103,7 +106,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.v_speed
 
     def shoot(self):
-        bullet = Bullet(self.rect.centerx, self.rect.top)
+        bullet = Bullet(self.rect.centerx, self.rect.centery)
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        rel_x, rel_y = mouse_x - bullet.rect.x, mouse_y - bullet.rect.y
+        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        bullet.image = pygame.transform.rotate(bullet.image, int(angle))
+        bullet.v_speed = rel_y // int(math.sqrt(abs(rel_y + rel_x)))
+        bullet.h_speed = rel_x // int(math.sqrt(abs(rel_y + rel_x)))
         all_sprites.add(bullet)
         bullets.add(bullet)
 
@@ -113,21 +122,54 @@ class Player(pygame.sprite.Sprite):
     def get_points(self):
         return self.points
 
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(gun_right, (gun_size, gun_size))
+        self.rect = self.image.get_rect()
+        self.look_left = False
+        self.rect.x = x
+        self.rect.y = y
 
-# class Bullet(pygame.sprite.Sprite):
-#     def __init__(self, x, y):
-#         pygame.sprite.Sprite.__init__(self)
-#         self.image = pygame.Surface((10, 20))
-#         self.image.fill(RED)
-#         self.rect = self.image.get_rect()
-#         self.rect.x = x
-#         self.rect.y = y
-#         self.v_speed = -10
-#
-#     def update(self):
-#         self.rect.y += self.speedy
-#         if self.rect.bottom < 0:
-#             self.kill()
+    def update(self):
+        self.rect.x = player.rect.x - block_size//2
+        self.rect.y = player.rect.y - block_size//2
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_LEFT]:
+            self.look_left = True
+            self.image = pygame.transform.scale(gun_left, (gun_size, gun_size))
+        if keystate[pygame.K_RIGHT]:
+            self.look_left = False
+            self.image = pygame.transform.scale(gun_right, (gun_size, gun_size))
+
+    def rotate(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        rel_x, rel_y = mouse_x - self.rect.x, mouse_y - self.rect.y
+        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        if self.look_left:
+            new_image = pygame.transform.rotate(self.image, int(-angle))
+        else:
+            new_image = pygame.transform.rotate(self.image, int(angle))
+        old_center = self.rect.center
+        self.image = new_image
+        self.rect = self.image.get_rect()
+        self.rect.center = old_center
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(bullet, (block_size//4, block_size//8))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.v_speed = -10
+        self.h_speed = 10
+
+    def update(self):
+        self.rect.y += self.v_speed
+        self.rect.x += self.h_speed
+        if self.rect.bottom < 0 or self.rect.left > WIDTH or self.rect.right < 0 or self.rect.top > HEIGHT:
+            self.kill()
 
 class Block(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
@@ -165,7 +207,7 @@ def load_game_map():
 def collide(sprite1, sprite2):
     global HEIGHT, state_game_over, state
 
-    if sprite2 == blocks:
+    if sprite1 == player and sprite2 == blocks:
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
         for collision in collisions:
             if ((sprite1.rect.bottom - collision.rect.top) < 1) or ((sprite1.rect.top - collision.rect.bottom) < 1):
@@ -181,19 +223,25 @@ def collide(sprite1, sprite2):
         for collision in collisions:
             if ((sprite1.rect.left - collision.rect.right) < 1) or ((sprite1.rect.right - collision.rect.left) < 1):
                 sprite1.rect.x = sprite1.x
-    elif sprite2 == coins:
-        collisions = pygame.sprite.spritecollide(sprite1, sprite2, True)
-        for collision in collisions:
-            sprite1.add_points()
-            coins.remove(collision)
+    elif sprite1 == player and sprite2 == coins:
+        for collision in sprite2:
+            if sprite1.rect.colliderect(collision.rect):
+                collision.kill()
+                sprite1.add_points()
+    elif sprite1 == bullets and sprite2 == blocks:
+        hits = pygame.sprite.groupcollide(sprite1, sprite2, True, False)
+        for hit in hits:
+            hit.kill()
 
 all_sprites = pygame.sprite.Group()
 # enemies = pygame.sprite.Group()
-# bullets = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 blocks = pygame.sprite.Group()
 coins = pygame.sprite.Group()
 player = Player()
+gun = Weapon(player.rect.x,player.rect.y)
 all_sprites.add(player)
+all_sprites.add(gun)
 # for i in range(8):
 #     m = Mob()
 #     all_sprites.add(m)
@@ -247,11 +295,13 @@ while done:
                 done = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
+                    # gun.rotate()
                     player.shoot()
-
+        # gun.update(player)
         all_sprites.update()
         collide(player, blocks)
         collide(player, coins)
+        collide(bullets, blocks)
 
         # hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
         # for hit in hits:
@@ -262,11 +312,11 @@ while done:
         # if hits:
         #     running = False
         # screen.blit(player.image_right, player.rect)
-
-        all_sprites.draw(screen)
         screen.blit(coin, (10, 10), )
         score = font.render(f"{player.get_points()}", True, (255, 204, 0))
         screen.blit(score, (40, -10))
+        all_sprites.draw(screen)
+
 
     if state == state_game_over:
         screen.blit(text_game_over, (50, 50))
