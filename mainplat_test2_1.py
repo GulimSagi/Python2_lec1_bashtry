@@ -235,7 +235,8 @@ class Bullet(pygame.sprite.Sprite):
 
         self.rect.y += self.v_speed
         self.rect.x += self.h_speed
-        if self.rect.bottom < 0 + camera_y or self.rect.left > WIDTH - camera_x or self.rect.right + camera_x < 0 or self.rect.top > HEIGHT - camera_y:
+        # print(camera_y)
+        if self.rect.bottom < 0 - camera_y or self.rect.left > WIDTH - camera_x or self.rect.right + camera_x < 0 or self.rect.top > HEIGHT + camera_y:
             self.kill()
 
 class Block(pygame.sprite.Sprite):
@@ -276,26 +277,35 @@ def collide(sprite1, sprite2):
 
     if sprite1 == player and sprite2 == blocks:
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
-        for collision in collisions:
-            r_from_above = collision.rect.y - sprite1.y - block_size
-            r_from_below = sprite1.y - collision.rect.y - block_size
-            if ((((sprite1.rect.bottom - collision.rect.top) < 1) or ((sprite1.rect.top - collision.rect.bottom) < 1))) and (r_from_above >= 0 or r_from_below >= 0):
-                sprite1.rect.y = sprite1.y 
-                if sprite1.v_speed > 0:
-                    # sprite1.rect.y = sprite1.y + r_from_above
-                    sprite1.jump_is_allowed = True
-                # elif sprite1.v_speed < 0:
+        if collisions == []:
+            sprite1.jump_is_allowed = False
+        else:
+            for collision in collisions:
+                r_from_above = collision.rect.y - sprite1.y - block_size
+                r_from_below = sprite1.y - collision.rect.y - block_size
+                if (abs(sprite1.x + block_size//2 - collision.rect.centerx) < block_size) and ((((sprite1.rect.bottom - collision.rect.top) < 1) or ((sprite1.rect.top - collision.rect.bottom) < 1))) and (r_from_above >= 0 or r_from_below >= 0):
+
+                    # print(sprite1.rect.x, sprite1.x, collision.rect.left)
+                    # print(sprite1.rect.centery, collision.rect.centery)
                     # sprite1.rect.y = sprite1.y
-                sprite1.v_speed = 0
-                if collision.jump:
-                    sprite1.v_speed = -sprite1.jump_height
-                    sprite1.jump_height = 40
-                else:
-                    sprite1.jump_height = 30
+                    # print(sprite1.rect.bottom)
+                    if sprite1.v_speed > 0:
+                        sprite1.rect.y = sprite1.y + r_from_above
+                        sprite1.jump_is_allowed = True
+                    elif sprite1.v_speed < 0:
+                        sprite1.rect.y = sprite1.y
+                    sprite1.v_speed = 0
+                    if collision.jump:
+                        sprite1.v_speed = -sprite1.jump_height
+                        sprite1.jump_height = 40
+                    else:
+                        sprite1.jump_height = 30
 
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
         for collision in collisions:
-            if ((sprite1.rect.left - collision.rect.right) < 1) or ((sprite1.rect.right - collision.rect.left) < 1):
+            # if ((sprite1.rect.left - collision.rect.right) == 0) or ((sprite1.rect.right - collision.rect.left) < 1):
+            if sprite1.rect.left <= collision.rect.right or sprite1.rect.right >= collision.rect.left:
+                # print('yaho')
                 sprite1.rect.x = sprite1.x
 
 

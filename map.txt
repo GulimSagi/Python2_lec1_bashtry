@@ -4,10 +4,10 @@
                             gggg            ccc
                                            cbbbc
                        ccc                cbbbbbc
-         ccc  ccc      ggg                bbbbbbb
-         ggg  ggg               ccc       bcccccb      cccccc
-                                ggg       b     b      gggggg
-          ccccc    cccccc                 bccccccccc            cccccc
- t   cccccgggggccccggggggcccccc      ccct ggggggggggccccc ccccccggggggcccc
+          ccc ccc      ggg                bbbbbbb
+          ggg ggg               ccc       bcccccb      cccccc
+          ggggg                 ggg       b     b      gggggg
+          ggggg    cccccc                 bccccccccc            cccccc
+ t   ccccccccccccccggggggcccccc      ccct ggggggggggccccc ccccccggggggcccc
 gggg gggggmmmmmggggmmmmmmgggggg      gggg mmmmmmmmmmggggg ggggggmmmmmmgggg    gggggggg
 mmmm mmmmmmmmmmmmmmmmmmmmmmmmmm      mmmm                                                                                                                                                                                                                       ",
