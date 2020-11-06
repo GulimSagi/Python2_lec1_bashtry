@@ -1,11 +1,11 @@
 
-                                    ccccc
+                            e       ccccc
                             cccc    ggggg
                             gggg            ccc
                                            cbbbc
-                       ccc                cbbbbbc
-          ccc ccc      ggg                bbbbbbb
-          ggg ggg               ccc       bcccccb      cccccc
+               e       ccc                cbbbbbc
+          ccc ccc   e  ggg                bbbbbbb
+          gggggg                ccc       bcccccb  e   cccccc
           ggggg                 ggg       b     b      gggggg
           ggggg    cccccc                 bccccccccc            cccccc
  t   ccccccccccccccggggggcccccc      ccct ggggggggggccccc ccccccggggggcccc
