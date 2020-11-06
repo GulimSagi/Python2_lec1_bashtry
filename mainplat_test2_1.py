@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 
 WIDTH = 1024
 HEIGHT = 768
@@ -111,14 +112,12 @@ class Player(pygame.sprite.Sprite):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         mouse_x -= camera_x
         mouse_y -= int(camera_y * 0.3)
-        print((mouse_x, mouse_y),(camera_x, camera_y), pygame.mouse.get_pos(), (self.rect.x, self.rect.y), (self.x, self.y), bullet.rect.x, bullet.rect.y)
+        print((player.x + block_size//2, player.y + block_size//2), (player.rect.centerx, player.rect.centery), (mouse_x, mouse_y),(camera_x, camera_y), pygame.mouse.get_pos(), (self.rect.x, self.rect.y), (self.x, self.y), bullet.rect.x, bullet.rect.y)
         rel_x, rel_y = mouse_x - bullet.rect.x, mouse_y - bullet.rect.y
         angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
         bullet.image = pygame.transform.rotate(bullet.image, int(angle))
         bullet.v_speed = rel_y // int(math.sqrt(abs(rel_y + rel_x)))
         bullet.h_speed = rel_x // int(math.sqrt(abs(rel_y + rel_x)))
-        # bullet.v_speed = 40
-        # bullet.h_speed = 40
         all_sprites.add(bullet)
         bullets.add(bullet)
 
@@ -149,30 +148,52 @@ class Mob(pygame.sprite.Sprite):
         self.rect.y = y
         self.camera_x = 0
         self.camera_y = 0
+        self.cycle = 130
+        self.change = 0
+        self.trigger = True
+        self.collided_with_block = False
 
     def update(self):
         global gravity, state, state_game_over
-
-        if self.rect.x + self.camera_x > WIDTH * 0.9:
-            self.camera_x -= 10
-        elif self.rect.x + self.camera_x < WIDTH * 0.1:
-            self.camera_x += 10
-        self.camera_y = -self.y + HEIGHT * 0.5
+        rand_number = random.randint(1, 4)
+        # rand_number = 3
 
         if self.y > HEIGHT:
             self.kill()
         self.h_speed = 0
         self.v_speed = self.v_speed + gravity
+
         if self.v_speed > 25:
             self.v_speed = 25
+        
+        if self.trigger:
+            projection = player.rect.x - self.rect.x
+            self.h_speed = rand_number if bool(projection >= 0) else -rand_number
 
-        # self.rect.x += self.v_speed
+        else:
+            if self.cycle >= 0:
+                self.h_speed = 2 if bool(self.change) else -2
+                self.cycle -= 1
+            else:
+                self.cycle = 130
+                self.change = (self.change + 1) % 2
+
+        if self.collided_with_block and self.jump_is_allowed:
+            print(self.collided_with_block, self.jump_is_allowed)
+            self.v_speed -= self.jump_height
+            self.jump_is_allowed = False
+
+        if self.h_speed > 0:
+            self.image = pygame.transform.scale(enemy1_right, (block_size, block_size))
+        else:
+            self.image = pygame.transform.scale(enemy1_left, (block_size, block_size))
+
             
+
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
-
     def shoot(self):
         bullet = Bullet(self.rect.centerx, self.rect.centery)
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -196,9 +217,9 @@ class Weapon(pygame.sprite.Sprite):
 
     def update(self):
         global camera_x, camera_y
-        
-        self.rect.x = player.rect.x - block_size//2
-        self.rect.y = player.rect.y - block_size//2
+        # print(self.rect.centerx, player.rect.centerx, player.x + block_size//2)
+        self.rect.centerx = player.rect.centerx
+        self.rect.centery = player.rect.centery
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_LEFT]:
             self.look_left = True
@@ -279,6 +300,7 @@ def collide(sprite1, sprite2):
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
         if collisions == []:
             sprite1.jump_is_allowed = False
+            # sprite1.stucked = False
         else:
             for collision in collisions:
                 r_from_above = collision.rect.y - sprite1.y - block_size
@@ -293,7 +315,7 @@ def collide(sprite1, sprite2):
                         sprite1.rect.y = sprite1.y + r_from_above
                         sprite1.jump_is_allowed = True
                     elif sprite1.v_speed < 0:
-                        sprite1.rect.y = sprite1.y
+                        sprite1.rect.y = sprite1.y - r_from_below
                     sprite1.v_speed = 0
                     if collision.jump:
                         sprite1.v_speed = -sprite1.jump_height
@@ -302,37 +324,63 @@ def collide(sprite1, sprite2):
                         sprite1.jump_height = 30
 
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
+        # print(collisions)
         for collision in collisions:
             # if ((sprite1.rect.left - collision.rect.right) == 0) or ((sprite1.rect.right - collision.rect.left) < 1):
             if sprite1.rect.left <= collision.rect.right or sprite1.rect.right >= collision.rect.left:
                 # print('yaho')
                 sprite1.rect.x = sprite1.x
-
+                if sprite1.h_speed > 0:
+                    r_from_left = collision.rect.left - sprite1.rect.right
+                    sprite1.rect.x = sprite1.x + r_from_left
+                if sprite1.h_speed < 0:
+                    r_from_right = sprite1.rect.left - collision.rect.right
+                    sprite1.rect.x = sprite1.x - r_from_right
 
     if sprite1 == mobs and sprite2 == blocks:
         for mob in sprite1:
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
-            for collision in collisions:
-                r_from_above = collision.rect.y - mob.y - block_size
-                r_from_below = mob.y - collision.rect.y - block_size
-                if ((((mob.rect.bottom - collision.rect.top) < 1) or ((mob.rect.top - collision.rect.bottom) < 1))) and (r_from_above >= 0 or r_from_below >= 0):
-                    mob.rect.y = mob.y 
-                    if mob.v_speed > 0:
-                        mob.rect.y = mob.y + r_from_above
-                        mob.jump_is_allowed = True
-                    # elif mob.v_speed < 0:
-                        # mob.rect.y = mob.y - r_from_below
-                    mob.v_speed = 0
-                    if collision.jump:
-                        mob.v_speed = -mob.jump_height
-                        mob.jump_height = 40
-                    else:
-                        mob.jump_height = 30
+            if collisions == []:
+                mob.jump_is_allowed = False
+            else:
+                for collision in collisions:
+                    r_from_above = collision.rect.y - mob.y - block_size
+                    r_from_below = mob.y - collision.rect.y - block_size
+                    if (abs(mob.x + block_size//2 - collision.rect.centerx) < block_size) and ((((mob.rect.bottom - collision.rect.top) < 1) or ((mob.rect.top - collision.rect.bottom) < 1))) and (r_from_above >= 0 or r_from_below >= 0):
+
+                        # print(mob.rect.x, mob.x, collision.rect.left)
+                        # print(mob.rect.centery, collision.rect.centery)
+                        # mob.rect.y = mob.y
+                        # print(mob.rect.bottom)
+                        if mob.v_speed > 0:
+                            mob.rect.y = mob.y + r_from_above
+                            mob.jump_is_allowed = True
+                        elif mob.v_speed < 0:
+                            mob.rect.y = mob.y - r_from_below
+                        mob.v_speed = 0
+                        if collision.jump:
+                            mob.v_speed = -mob.jump_height
+                            mob.jump_height = 40
+                        else:
+                            mob.jump_height = 30
 
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
+            if collisions == []:
+                mob.collided_with_block = False
+            # print(collisions)
             for collision in collisions:
-                if ((mob.rect.left - collision.rect.right) < 1) or ((mob.rect.right - collision.rect.left) < 1):
+                # if ((mob.rect.left - collision.rect.right) == 0) or ((mob.rect.right - collision.rect.left) < 1):
+                if mob.rect.left <= collision.rect.right or mob.rect.right >= collision.rect.left:
+                    # print('yaho')
                     mob.rect.x = mob.x
+                    if mob.h_speed > 0:
+                        r_from_left = collision.rect.left - mob.rect.right
+                        mob.rect.x = mob.x + r_from_left
+                    if mob.h_speed < 0:
+                        r_from_right = mob.rect.left - collision.rect.right
+                        mob.rect.x = mob.x - r_from_right
+
+                    mob.collided_with_block = True
                     
     elif sprite1 == player and sprite2 == coins:
         for collision in sprite2:
@@ -379,10 +427,10 @@ while done:
 
 
             load_game_map()
-            for i in range(3):
-                mob = Mob(250*(i + 1), 0)
-                mobs.add(mob)
-                all_sprites.add(mob)
+            # for i in range(3):
+                # mob = Mob(250*(i + 1), 0)
+                # mobs.add(mob)
+                # all_sprites.add(mob)
             player = Player()
             all_sprites.add(player)
             gun = Weapon(player.rect.x,player.rect.y)
@@ -410,6 +458,11 @@ while done:
                         tramp1.jump = True
                         blocks.add(tramp1)
                         all_sprites.add(tramp1)
+                    if game_map[i][j] == 'e':
+                        mob = Mob(block_size * j, block_size * i)
+                        mobs.add(mob)
+                        all_sprites.add(mob)
+
 
         screen.blit(text_start, (50, 50))
 
@@ -441,7 +494,7 @@ while done:
         for m in hits.keys():
             m.health -= len(hits[m]) * 34
             if m.health <= 0:
-                print('sdfasd')
+                # print('sdfasd')
                 m.kill()
         # for hit in hits
             # m = Mob()
@@ -455,6 +508,7 @@ while done:
             screen.blit(fanta.image, (fanta.rect.x + camera_x, fanta.rect.y + int(camera_y * 0.3)))
         # print(stable_x, stable_y)
         # print(camera_x, camera_y)
+        # print((player.x + block_size//2, player.y + block_size//2), (player.rect.centerx, player.rect.centery))
 
         stable_x += camera_x
         stable_y += int(camera_y * 0.3)
