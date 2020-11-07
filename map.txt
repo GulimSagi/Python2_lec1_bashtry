@@ -1,13 +1,13 @@
 
                             e       ccccc
                             cccc    ggggg
-                            gggg            ccc
-                                           cbbbc
-               e       ccc                cbbbbbc
+                            gggg
+                                            bbb
+               e       ccc                 bbbbb
           ccc ccc   e  ggg                bbbbbbb
-          gggggg                ccc       bcccccb  e   cccccc
-          ggggg                 ggg       b     b      gggggg
-          ggggg    cccccc                 bccccccccc            cccccc
+          gggggg                ccc       bbbbbbb  e   cccccc
+          ggggg                 ggg       bbbbbbb      gggggg
+          ggggg    cccccc                 bbbdbbbckc            cccccc
  t   ccccccccccccccggggggcccccc      ccct ggggggggggccccc ccccccggggggcccc
 gggg gggggmmmmmggggmmmmmmgggggg      gggg mmmmmmmmmmggggg ggggggmmmmmmgggg    gggggggg
 mmmm mmmmmmmmmmmmmmmmmmmmmmmmmm      mmmm                                                                                                                                                                                                                       ",
