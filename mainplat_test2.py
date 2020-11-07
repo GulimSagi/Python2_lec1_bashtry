@@ -70,7 +70,7 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.v_speed = -5
         self.h_speed = 0
-        self.jump_height = 35
+        self.jump_height = 30
         self.jump_is_allowed = False
         self.look_left = False
         self.health = 100
@@ -87,9 +87,9 @@ class Player(pygame.sprite.Sprite):
         global gravity, state, state_game_over, camera_x, camera_y, stable_x, stable_y
 
         if self.rect.x + camera_x > WIDTH * 0.65:
-            camera_x -= 10
+            camera_x -= 7
         elif self.rect.x + camera_x < WIDTH * 0.35:
-            camera_x += 10
+            camera_x += 7
         camera_y = -self.rect.y + HEIGHT * 0.5
 
         if self.y > HEIGHT:
@@ -107,11 +107,11 @@ class Player(pygame.sprite.Sprite):
         if keystate[pygame.K_LEFT]:
             self.image = pygame.transform.scale(hero_left, (block_size, block_size))
             self.look_left = True
-            self.h_speed = -10
+            self.h_speed = -7
         if keystate[pygame.K_RIGHT]:
             self.image = pygame.transform.scale(hero_right, (block_size, block_size))
             self.look_left = False
-            self.h_speed = 10
+            self.h_speed = 7
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
@@ -122,14 +122,17 @@ class Player(pygame.sprite.Sprite):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         mouse_x -= camera_x
         mouse_y -= int(camera_y * 0.3)
-        # print((player.x + block_size//2, player.y + block_size//2), (player.rect.centerx, player.rect.centery), (mouse_x, mouse_y),(camera_x, camera_y), pygame.mouse.get_pos(), (self.rect.x, self.rect.y), (self.x, self.y), bullet.rect.x, bullet.rect.y)
         rel_x, rel_y = mouse_x - bullet.rect.x, mouse_y - bullet.rect.y
         angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
         bullet.image = pygame.transform.rotate(bullet.image, int(angle))
-        bullet.v_speed = rel_y // int(math.sqrt(abs(rel_y + rel_x)))
-        bullet.h_speed = rel_x // int(math.sqrt(abs(rel_y + rel_x)))
-        all_sprites.add(bullet)
-        bullets.add(bullet)
+        lendth_vector = math.sqrt(rel_x**2 + rel_y**2)
+        if lendth_vector != 0:
+            norm_vector_x, norm_vector_y = rel_x / lendth_vector, rel_y / lendth_vector
+            bullet.h_speed = int(norm_vector_x * 30)
+            bullet.v_speed = int(norm_vector_y * 30)
+            all_sprites.add(bullet)
+            bullets.add(bullet)
+
 
     def add_points(self):
         self.points += 1
@@ -153,7 +156,7 @@ class Mob(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.v_speed = -5
         self.h_speed = 0
-        self.jump_height = 35
+        self.jump_height = 30
         self.jump_is_allowed = False
         self.look_left = False
         self.health = 100
@@ -175,6 +178,8 @@ class Mob(pygame.sprite.Sprite):
         self.collided_with_block = False
         self.wait_to_shoot = 10
         self.walk_away = 3
+        self.path = []
+        self.trigger_old = self.trigger
 
     def update(self):
         global gravity, state, state_game_over
@@ -190,30 +195,30 @@ class Mob(pygame.sprite.Sprite):
         if self.v_speed > 25:
             self.v_speed = 25
 
-        if self.trigger_general:
+        if self.trigger and self.trigger_general:
             projection = player.rect.x - self.rect.x
             self.h_speed = rand_number if bool(projection >= 0) else -rand_number
             if self.wait_to_shoot == 0:
                 self.shoot()
             self.wait_to_shoot = (self.wait_to_shoot + 1) % 20
+            self.path = []
 
-        # elif self.trigger == False and self.trigger_general:
-        #     if self.walk_away >= 0:
-        #         if self.image ==  self.image_left:
-        #             self.h_speed = 3
-        #             self.walk_away -= 1
-        #         elif self.image == self.image_right:
-        #             self.h_speed = -3
-        #             self.walk_away -= 1
+        if self.trigger == False and self.trigger_old == True:
+            self.path.append((player.rect.x, player.rect.y))
 
-        #     if self.walk_away == -1:
-        #         if self.image == self.image_left:
-        #             self.image = self.image_right
-        #         else:
-        #             self.image == self.image_left
-                    
-                
-                
+        if self.trigger == False and self.trigger_general == True:
+            self.path.append((player.rect.x, player.rect.y))
+            if self.path != [] and self.rect.x != self.path[0][0] and self.rect.y != self.path[0][1]:
+                projection = self.path[0][0] - self.rect.x
+                self.h_speed = rand_number if bool(projection >= 0) else -rand_number
+            elif self.path != [] and self.rect.x == self.path[0][0] and self.rect.y > self.path[0][1] and self.jump_is_allowed:
+                self.v_speed -= self.jump_height
+                self.jump_is_allowed = False
+
+            # elif self.path == []:
+                # pass
+            else:
+                self.path.pop(0)
             
         if self.trigger == False and self.trigger_general == False:
             if self.cycle >= 0:
@@ -236,6 +241,7 @@ class Mob(pygame.sprite.Sprite):
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
+        self.trigger_old = self.trigger
 
     def shoot(self):
         bullet = Bullet(self.rect.centerx, self.rect.centery)
@@ -374,9 +380,6 @@ class X_ray(pygame.sprite.Sprite):
         if self.rect.bottom < -2000 or self.rect.left > WIDTH - camera_x or self.rect.right + camera_x < 0 or self.rect.top > 2000:
             self.kill()
 
-        
-        
-
 #Functions
 def load_game_map():
     global game_map
@@ -403,7 +406,6 @@ def collide(sprite1, sprite2):
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
         if collisions == []:
             sprite1.jump_is_allowed = False
-            # sprite1.stucked = False
         else:
             for collision in collisions:
                 r_from_above = collision.rect.y - sprite1.y - block_size
@@ -416,10 +418,10 @@ def collide(sprite1, sprite2):
                         sprite1.rect.y = sprite1.y - r_from_below
                     sprite1.v_speed = 0
                     if collision.jump:
-                        sprite1.jump_height = 45
+                        sprite1.jump_height = 40
                         sprite1.v_speed = -sprite1.jump_height
                     else:
-                        sprite1.jump_height = 35
+                        sprite1.jump_height = 30
 
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
         for collision in collisions:
@@ -449,10 +451,10 @@ def collide(sprite1, sprite2):
                             mob.rect.y = mob.y - r_from_below
                         mob.v_speed = 0
                         if collision.jump:
-                            mob.jump_height = 45
+                            mob.jump_height = 40
                             mob.v_speed = -mob.jump_height
                         else:
-                            mob.jump_height = 35
+                            mob.jump_height = 30
 
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
             if collisions == []:
@@ -517,9 +519,10 @@ blocks = pygame.sprite.Group()
 coins = pygame.sprite.Group()
 keys = pygame.sprite.Group()
 x_rays_enemy = pygame.sprite.Group()
+path = []
 
 game_map = []
-gravity = 3
+gravity = 2
 state = state_start
 waiting_command = 0
 
@@ -616,9 +619,6 @@ while done:
         collide(player, x_rays_enemy)
         collide(x_rays_enemy, blocks)
         
-        # for mob in mobs:
-            # mob.shoot()
-
         hits = pygame.sprite.groupcollide(mobs, bullets, False, True)
 
         for m in hits.keys():
