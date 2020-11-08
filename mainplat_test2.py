@@ -2,13 +2,16 @@ import pygame
 import math
 import random
 
-WIDTH = 1024
-HEIGHT = 768
+WIDTH = 1600
+HEIGHT = 900
 block_size = 50
 coin_size = block_size//2
 gun_size = block_size*2
 key_size = 30
 FPS = 60
+current_time = 0
+button_press_time = 0
+turret_reload = 0
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -28,9 +31,10 @@ state_game_over = "game over"
 
 pygame.init()
 # pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 clock = pygame.time.Clock()
 
+background_image = pygame.image.load('background1.png').convert_alpha()
 hero_right = pygame.image.load('mario_right.png').convert_alpha()
 hero_left = pygame.image.load('mario_left.png').convert_alpha()
 ground = pygame.image.load('ground.png').convert_alpha()
@@ -49,6 +53,7 @@ opened_door = pygame.image.load('opened_door.png').convert_alpha()
 tree = pygame.image.load('tree.png').convert_alpha()
 cloud = pygame.image.load('cloud.png').convert_alpha()
 transparent_piece = pygame.image.load('transparent_piece.png').convert_alpha()
+health = pygame.image.load('health.png').convert_alpha()
 
 ground = pygame.transform.scale(ground, (block_size, block_size))
 mud = pygame.transform.scale(mud, (block_size, block_size))
@@ -62,6 +67,7 @@ enemy1_right = pygame.transform.scale(enemy1_right, (block_size, block_size))
 key = pygame.transform.scale(key, (key_size, key_size))
 closed_door = pygame.transform.scale(closed_door, (block_size, block_size))
 opened_door = pygame.transform.scale(opened_door, (block_size, block_size))
+health = pygame.transform.scale(health, (27, 23))
 tree = pygame.transform.scale(tree, (block_size*2, block_size*2))
 cloud = pygame.transform.scale(cloud, (block_size*2, block_size))
 
@@ -70,7 +76,7 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.v_speed = -5
         self.h_speed = 0
-        self.jump_height = 30
+        self.jump_height = 20
         self.jump_is_allowed = False
         self.look_left = False
         self.health = 100
@@ -92,7 +98,7 @@ class Player(pygame.sprite.Sprite):
             camera_x += 7
         camera_y = -self.rect.y + HEIGHT * 0.5
 
-        if self.y > HEIGHT:
+        if self.y > HEIGHT + 200:
             self.kill()
             state = state_game_over
         self.h_speed = 0
@@ -141,13 +147,13 @@ class Player(pygame.sprite.Sprite):
         self.keys += 1
 
     def show_points(self):
-        screen.blit(coin, (10, 10), )
+        screen.blit(coin, (10, 10))
         score = font.render(f"{self.points}", True, (255, 204, 0))
         screen.blit(score, (40, -10))
 
     def show_keys(self):
         key_image = pygame.transform.scale(key, (coin_size, coin_size))
-        screen.blit(key_image, (10, 50), )
+        screen.blit(key_image, (10, 50))
         score = font.render(f"{self.keys}", True, (218, 165, 32))
         screen.blit(score, (40, 30))
 
@@ -200,7 +206,7 @@ class Mob(pygame.sprite.Sprite):
             self.h_speed = rand_number if bool(projection >= 0) else -rand_number
             if self.wait_to_shoot == 0:
                 self.shoot()
-            self.wait_to_shoot = (self.wait_to_shoot + 1) % 20
+            self.wait_to_shoot = (self.wait_to_shoot + 1) % 60
             self.path = []
 
         if self.trigger == False and self.trigger_old == True:
@@ -273,13 +279,14 @@ class Mob(pygame.sprite.Sprite):
 
 
 class Weapon(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, reload):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(gun_right, (gun_size, gun_size))
         self.rect = self.image.get_rect()
         self.look_left = False
         self.rect.x = x
         self.rect.y = y
+        self.reload = reload
 
     def update(self):
         global camera_x, camera_y
@@ -331,6 +338,16 @@ class Block(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.jump = False
+        self.shooting = False
+
+    def shoot(self):
+        bullet = Bullet(self.rect.centerx - block_size, self.rect.centery)
+        bullet.image = pygame.transform.rotate(bullet.image, 180)
+        bullet.h_speed = -10
+        bullet.v_speed = 0
+        bullets_enemy.add(bullet)
+        bullets.add(bullet)
+        all_sprites.add(bullet)
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
@@ -384,7 +401,7 @@ class X_ray(pygame.sprite.Sprite):
 def load_game_map():
     global game_map
     game_map.clear()
-    with open('map.txt', 'r') as f:
+    with open('map1.txt', 'r') as f:
         for line in f:
             game_map.append(line)
 
@@ -418,10 +435,11 @@ def collide(sprite1, sprite2):
                         sprite1.rect.y = sprite1.y - r_from_below
                     sprite1.v_speed = 0
                     if collision.jump:
-                        sprite1.jump_height = 40
+                        sprite1.jump_height = 30
                         sprite1.v_speed = -sprite1.jump_height
                     else:
-                        sprite1.jump_height = 30
+                        sprite1.jump_height = 20
+
 
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
         for collision in collisions:
@@ -451,10 +469,10 @@ def collide(sprite1, sprite2):
                             mob.rect.y = mob.y - r_from_below
                         mob.v_speed = 0
                         if collision.jump:
-                            mob.jump_height = 40
+                            mob.jump_height = 30
                             mob.v_speed = -mob.jump_height
                         else:
-                            mob.jump_height = 30
+                            mob.jump_height = 20
 
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
             if collisions == []:
@@ -522,13 +540,13 @@ x_rays_enemy = pygame.sprite.Group()
 path = []
 
 game_map = []
-gravity = 2
+gravity = 1
 state = state_start
 waiting_command = 0
 
 done = True
 while done:
-    screen.fill((30, 140, 255))
+    screen.blit(background_image, (0,0))
 
     if state == state_start:
         if waiting_command < 1:
@@ -554,6 +572,11 @@ while done:
                     if game_map[i][j] == 'b':
                         brick1 = Block(block_size * j, block_size * i, brick)
                         all_sprites.add(brick1)
+                    if game_map[i][j] == '1':
+                        machinegun1 = Block(block_size * j, block_size * i, brick)
+                        machinegun1.shooting = True
+                        blocks.add(machinegun1)
+                        all_sprites.add(machinegun1)
                     if game_map[i][j] == '0':
                         cloud1 = Block(block_size * j, block_size * i, cloud)
                         all_sprites.add(cloud1)
@@ -588,25 +611,33 @@ while done:
 
             player = Player()
             all_sprites.add(player)
-            gun = Weapon(player.rect.x, player.rect.y)
+            gun = Weapon(player.rect.x, player.rect.y, 1000)
             all_sprites.add(gun)
 
         screen.blit(text_start, (50, 50))
 
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = False
                 if event.key == pygame.K_SPACE:
                     state = state_play
         waiting_command += 1
 
     if state == state_play:
+        current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
+                if (event.button == 1) and (current_time - button_press_time > gun.reload):
                     # gun.rotate()
                     player.shoot()
+                    button_press_time = pygame.time.get_ticks()
+
         all_sprites.update()
         collide(player, blocks)
         collide(player, door1)
@@ -618,9 +649,12 @@ while done:
         collide(player, bullets_enemy)
         collide(player, x_rays_enemy)
         collide(x_rays_enemy, blocks)
+
+        if (current_time - turret_reload > 1000):
+            machinegun1.shoot()
+            turret_reload = pygame.time.get_ticks()
         
         hits = pygame.sprite.groupcollide(mobs, bullets, False, True)
-
         for m in hits.keys():
             m.health -= len(hits[m]) * 20
             if m.health <= 0:
@@ -630,7 +664,8 @@ while done:
 
         player.show_points()
         player.show_keys()
-        draw_shield_bar(120, 20, 890, 10, player.health, GREEN)
+        draw_shield_bar(120, 20, WIDTH-130, 10, player.health, GREEN)
+        screen.blit(health, (WIDTH-160, 10))
         for m in mobs:
             draw_shield_bar(60, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, RED)
 
@@ -643,6 +678,8 @@ while done:
             if event.type == pygame.QUIT:
                 done = False
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = False
                 if event.key == pygame.K_SPACE:
                     state = state_start
                     waiting_command = 0
