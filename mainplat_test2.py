@@ -4,7 +4,7 @@ import random
 
 WIDTH = 1080
 HEIGHT = 768
-block_size = 50
+block_size = 60
 coin_size = block_size//2
 gun_size = block_size
 key_size = 30
@@ -89,7 +89,7 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.v_speed = -5
         self.h_speed = 0
-        self.jump_height = 20
+        self.jump_height = 22
         self.jump_is_allowed = False
         self.look_left = False
         self.health = 100
@@ -112,7 +112,7 @@ class Player(pygame.sprite.Sprite):
             camera_x -= 7
         elif self.rect.x + camera_x < WIDTH * 0.35:
             camera_x += 7
-        camera_y = -self.rect.y + HEIGHT * 0.5
+        camera_y = -self.rect.y + HEIGHT * 0.1
 
         if self.y > HEIGHT + 200:
             self.kill()
@@ -184,7 +184,7 @@ class Mob(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.v_speed = -5
         self.h_speed = 0
-        self.jump_height = 30
+        self.jump_height = 22
         self.jump_is_allowed = False
         self.look_left = False
         self.health = 100
@@ -505,10 +505,10 @@ def collide(sprite1, sprite2):
                         sprite1.rect.y = sprite1.y - r_from_below
                     sprite1.v_speed = 0
                     if collision.jump:
-                        sprite1.jump_height = 30
+                        sprite1.jump_height = 32
                         sprite1.v_speed = -sprite1.jump_height
                     else:
-                        sprite1.jump_height = 20
+                        sprite1.jump_height = 22
 
 
         collisions = pygame.sprite.spritecollide(sprite1, sprite2, False)
@@ -545,11 +545,11 @@ def collide(sprite1, sprite2):
                             mob.rect.y = mob.y - r_from_below
                         mob.v_speed = 0
                         if collision.jump:
-                            mob.jump_height = 30
+                            mob.jump_height = 32
                             mob.v_speed = -mob.jump_height
                             mob.jump_is_allowed = False
                         else:
-                            mob.jump_height = 20
+                            mob.jump_height = 22
 
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
             if collisions == []:
@@ -623,6 +623,7 @@ blocks = pygame.sprite.Group()
 coins = pygame.sprite.Group()
 keys = pygame.sprite.Group()
 x_rays_enemy = pygame.sprite.Group()
+event_blocks = {}
 path = []
 
 game_map = []
@@ -687,12 +688,17 @@ while done:
                         tramp1.jump = True
                         blocks.add(tramp1)
                         all_sprites.add(tramp1)
+                    if game_map[i][j] == 's':
+                        event_blocks['boss'] = [block_size * j, False]
+                        # print(event_blocks['boss'][0], event_blocks['boss'][1])
 
+            # a = []
             for i in range(len(game_map)):
                 for j in range(len(game_map[i])):
                     if game_map[i][j] == 'e':
                         gun = WeaponPistol(60)
                         mob = Mob(block_size * j, block_size * i, enemy1_left, enemy1_right, block_size, gun)
+                        # a.append(mob)
                         mobs.add(mob)
                         all_sprites.add(mob)
                         all_sprites.add(gun)
@@ -700,9 +706,9 @@ while done:
                     if game_map[i][j] == 'B':
                         gun = WeaponShotgun(60)
                         boss1 = Boss(block_size * j, block_size * i, boss1_left, boss1_right, block_size*3, gun)
-                        mobs.add(boss1)
-                        all_sprites.add(boss1)
-                        all_sprites.add(gun)
+                        # mobs.add(boss1)
+                        # all_sprites.add(boss1)
+                        # all_sprites.add(gun)
 
 
             gun = WeaponShotgun(60)
@@ -711,7 +717,6 @@ while done:
             all_sprites.add(gun)
 
         screen.blit(text_start, (50, 50))
-
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -721,6 +726,7 @@ while done:
         waiting_command += 1
 
     if state == state_play:
+        # print(a[-1].rect.x, a[-1].rect.y)
         current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -751,6 +757,13 @@ while done:
             machinegun1.shoot()
             turret_reload = pygame.time.get_ticks()
         
+        for key_i in event_blocks.keys():
+            if key_i == 'boss' and player.rect.x > event_blocks[key_i][0] and event_blocks[key_i][1] == False:
+                mobs.add(boss1)
+                all_sprites.add(boss1)
+                all_sprites.add(boss1.gun)
+                event_blocks[key_i][1] = True
+
         for fanta in all_sprites:
             screen.blit(fanta.image, (fanta.rect.x + camera_x, fanta.rect.y + int(camera_y * 0.3)))
 
