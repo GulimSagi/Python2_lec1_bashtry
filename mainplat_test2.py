@@ -96,6 +96,8 @@ class Player(pygame.sprite.Sprite):
         self.points = 0
         self.keys = 0
         self.image = pygame.transform.scale(hero_right, (block_size, block_size))
+        self.image_left = pygame.transform.scale(hero_left, (block_size, block_size))
+        self.image_right = pygame.transform.scale(hero_right, (block_size, block_size))
         self.rect = self.image.get_rect()
         self.x = 0
         self.y = 0
@@ -125,11 +127,13 @@ class Player(pygame.sprite.Sprite):
                 self.v_speed = -self.jump_height
                 self.jump_is_allowed = False
         if keystate[pygame.K_LEFT]:
-            self.image = pygame.transform.scale(hero_left, (block_size, block_size))
+            self.gun.look_left = True
+            self.image = self.image_left
             self.look_left = True
             self.h_speed = -7
         if keystate[pygame.K_RIGHT]:
-            self.image = pygame.transform.scale(hero_right, (block_size, block_size))
+            self.gun.look_left = False
+            self.image = self.image_right
             self.look_left = False
             self.h_speed = 7
         self.x = self.rect.x
@@ -213,6 +217,7 @@ class Mob(pygame.sprite.Sprite):
         self.shoot_x_ray()
         if self.y > HEIGHT:
             self.kill()
+            self.gun.kill()
 
         self.h_speed = 0
         self.v_speed = self.v_speed + gravity
@@ -244,6 +249,9 @@ class Mob(pygame.sprite.Sprite):
                 # pass
             else:
                 self.path.pop(0)
+
+            
+
             
         if self.trigger == False and self.trigger_general == False:
             if self.cycle >= 0:
@@ -259,13 +267,17 @@ class Mob(pygame.sprite.Sprite):
 
         if self.h_speed > 0:
             self.image = self.image_right
+            self.gun.look_left = False
         else:
             self.image = self.image_left
+            self.gun.look_left = True
 
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
+        self.gun.rect.centerx = self.rect.centerx
+        self.gun.rect.centery = self.rect.centery
         self.trigger_old = self.trigger
 
     def shoot(self):
@@ -318,11 +330,9 @@ class Weapon(pygame.sprite.Sprite):
         # self.rect.centerx = player.rect.centerx
         # self.rect.centery = player.rect.centery
         keystate = pygame.key.get_pressed()
-        if keystate[pygame.K_LEFT]:
-            self.look_left = True
+        if self.look_left == True:
             self.image = self.image_left
-        if keystate[pygame.K_RIGHT]:
-            self.look_left = False
+        if self.look_left == False:
             self.image = self.image_right
 
     def rotate(self):
@@ -341,9 +351,9 @@ class Weapon(pygame.sprite.Sprite):
 class WeaponPistol(Weapon):
     def __init__(self, reload):
         super(WeaponPistol, self).__init__(reload)
-        self.image = pygame.transform.scale(pistol_left, (gun_size, gun_size))
-        self.image_left = pygame.transform.scale(pistol_left, (gun_size, gun_size))
-        self.image_right = pygame.transform.scale(pistol_right, (gun_size, gun_size))
+        self.image = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
+        self.image_left = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
+        self.image_right = pygame.transform.scale(pistol_right, (int(gun_size*0.5), int(gun_size*0.5)))
         self.bullet_speed = 30
         self.damage = 10
 
@@ -523,6 +533,7 @@ def collide(sprite1, sprite2):
             if collisions == []:
                 mob.jump_is_allowed = False
             else:
+                mob.gun.centery = mob.y + block_size // 2
                 for collision in collisions:
                     r_from_above = collision.rect.y - mob.y - size
                     r_from_below = mob.y - collision.rect.y - size
@@ -543,6 +554,8 @@ def collide(sprite1, sprite2):
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
             if collisions == []:
                 mob.collided_with_block = False
+            if collisions != []:
+                mob.gun.centerx = mob.x + block_size // 2
             for collision in collisions:
                 if mob.rect.left <= collision.rect.right or mob.rect.right >= collision.rect.left:
                     mob.rect.x = mob.x
@@ -578,12 +591,13 @@ def collide(sprite1, sprite2):
             hit.mob.trigger = False
             hit.kill()
 
-    elif sprite1 == mobs and sprite2 == blocks:
-        hits = pygame.sprite.groupcollide(mobs, bullets, False, True)
+    elif sprite1 == mobs and sprite2 == bullets:
+        hits = pygame.sprite.groupcollide(sprite1, sprite2, False, True)
         for m in hits.keys():
             m.health -= len(hits[m]) * (hits[m][0].gun.damage)
             if m.health <= 0:
                 m.kill()
+                m.gun.kill()
 
 
     elif sprite1 == player and sprite2 == bullets_enemy:
@@ -677,16 +691,21 @@ while done:
             for i in range(len(game_map)):
                 for j in range(len(game_map[i])):
                     if game_map[i][j] == 'e':
-                        mob = Mob(block_size * j, block_size * i, enemy1_left, enemy1_right, block_size, WeaponPistol(60))
+                        gun = WeaponPistol(60)
+                        mob = Mob(block_size * j, block_size * i, enemy1_left, enemy1_right, block_size, gun)
                         mobs.add(mob)
                         all_sprites.add(mob)
+                        all_sprites.add(gun)
 
                     if game_map[i][j] == 'B':
-                        boss1 = Boss(block_size * j, block_size * i, boss1_left, boss1_right, block_size*3, WeaponShotgun(60))
+                        gun = WeaponShotgun(60)
+                        boss1 = Boss(block_size * j, block_size * i, boss1_left, boss1_right, block_size*3, gun)
                         mobs.add(boss1)
                         all_sprites.add(boss1)
+                        all_sprites.add(gun)
 
-            gun = WeaponShotgun(1000)
+
+            gun = WeaponShotgun(60)
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
