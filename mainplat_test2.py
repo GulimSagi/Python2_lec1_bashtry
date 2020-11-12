@@ -30,8 +30,9 @@ state_start = "welcome"
 state_play = "play"
 state_game_over = "game over"
 
-pygame.init()
+pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.mixer.init()
+pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
