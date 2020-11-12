@@ -57,8 +57,6 @@ mud = pygame.image.load('mud.png').convert_alpha()
 brick = pygame.image.load('brick.png').convert_alpha()
 trampoline = pygame.image.load('trampoline.png').convert_alpha()
 coin = pygame.image.load('coin.png').convert_alpha()
-gun_right = pygame.image.load('gun_right.png').convert_alpha()
-gun_left = pygame.image.load('gun_left.png').convert_alpha()
 enemy1_left = pygame.image.load('enemy1_left.png').convert_alpha()
 enemy1_right = pygame.image.load('enemy1_right.png').convert_alpha()
 bullet = pygame.image.load('bullet.png').convert_alpha()
@@ -71,10 +69,14 @@ transparent_piece = pygame.image.load('transparent_piece.png').convert_alpha()
 health = pygame.image.load('health.png').convert_alpha()
 boss1_left = pygame.image.load('boss1_left.png').convert_alpha()
 boss1_right = pygame.image.load('boss1_right.png').convert_alpha()
+gun_right = pygame.image.load('gun_right.png').convert_alpha()
+gun_left = pygame.image.load('gun_left.png').convert_alpha()
 pistol_left = pygame.image.load('pistol_left.png').convert_alpha()
 pistol_right = pygame.image.load('pistol_right.png').convert_alpha()
 shotgun_left = pygame.image.load('shotgun_left.png').convert_alpha()
 shotgun_right = pygame.image.load('shotgun_right.png').convert_alpha()
+Pulemet_right = pygame.image.load('Pulemet_right.png').convert_alpha()
+Pulemet_left = pygame.image.load('Pulemet_left.png').convert_alpha()
 
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
 hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
@@ -99,6 +101,8 @@ pistol_left = pygame.transform.scale(pistol_left, (block_size, block_size))
 pistol_right = pygame.transform.scale(pistol_right, (block_size, block_size))
 shotgun_left = pygame.transform.scale(shotgun_left, (block_size, block_size))
 shotgun_right = pygame.transform.scale(shotgun_right, (block_size, block_size))
+Pulemet_left = pygame.transform.scale(Pulemet_left, (block_size, block_size))
+Pulemet_right = pygame.transform.scale(Pulemet_right, (block_size, block_size))
 
 
 class Player(pygame.sprite.Sprite):
@@ -419,6 +423,44 @@ class WeaponShotgun(Weapon):
             Bullet(self.rect.centerx, self.rect.centery - 8, self),
             ]
         return bullets_list
+
+class WeaponPulemet(Weapon):
+    def __init__(self, reload):
+        super(WeaponPulemet, self).__init__(reload)
+        self.image = pygame.transform.scale(Pulemet_left, (gun_size, gun_size//2))
+        self.image_left = pygame.transform.scale(Pulemet_left, (gun_size, gun_size//2))
+        self.image_right = pygame.transform.scale(Pulemet_right, (gun_size, gun_size//2))
+        self.bullet_speed = 50
+        self.damage = 10
+
+    def prepare_bullets(self):
+        bullets_list = [
+            Bullet(self.rect.centerx, self.rect.centery, self),
+            Bullet(self.rect.centerx, self.rect.centery + 4, self),
+            Bullet(self.rect.centerx, self.rect.centery - 4, self),
+            Bullet(self.rect.centerx, self.rect.centery + 8, self),
+            Bullet(self.rect.centerx, self.rect.centery - 8, self),
+            ]
+        return bullets_list
+class WeaponPulemet2(Weapon):
+    def __init__(self, reload):
+        super(WeaponPulemet2, self).__init__(reload)
+        self.image = pygame.transform.scale(gun_left, (gun_size, gun_size//2))
+        self.image_left = pygame.transform.scale(gun_left, (gun_size, gun_size//2))
+        self.image_right = pygame.transform.scale(gun_right, (gun_size, gun_size//2))
+        self.bullet_speed = 50
+        self.damage = 10
+
+    def prepare_bullets(self):
+        bullets_list = [
+            Bullet(self.rect.centerx, self.rect.centery, self),
+            Bullet(self.rect.centerx, self.rect.centery + 4, self),
+            Bullet(self.rect.centerx, self.rect.centery - 4, self),
+            Bullet(self.rect.centerx, self.rect.centery + 8, self),
+            Bullet(self.rect.centerx, self.rect.centery - 8, self),
+            ]
+        return bullets_list
+
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -807,7 +849,7 @@ while done:
                         # all_sprites.add(gun)
 
 
-            gun = WeaponShotgun(1000)
+            gun = WeaponPulemet(1000)
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
