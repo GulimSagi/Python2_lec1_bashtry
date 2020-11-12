@@ -13,6 +13,7 @@ FPS = 60
 current_time = 0
 button_press_time = 0
 turret_reload = 0
+timer_for_shooting = 0
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -37,18 +38,20 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-pygame.mixer.music.load('sound/b_music.wav')
+pygame.mixer.music.load('sound/TheFatRat_Epic.mp3')
 pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.4)
 sound_coin = pygame.mixer.Sound('sound/coin.wav')
 sound_jump = pygame.mixer.Sound('sound/jump_landing.wav')
-sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav')
-sound_Pulemet = pygame.mixer.Sound('sound/machinegun.wav')
+sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav'); sound_shotgun.set_volume(0.5)
+sound_machinegun = pygame.mixer.Sound('sound/machine_gun2.wav'); sound_machinegun.set_volume(0.5)
 sound_run = pygame.mixer.Sound('sound/run.wav')
-sound_gun = pygame.mixer.Sound('sound/gun.wav')
+sound_gun = pygame.mixer.Sound('sound/gun.wav'); sound_gun.set_volume(0.5)
 sound_gameover = pygame.mixer.Sound('sound/gameover.wav')
 sound_key = pygame.mixer.Sound('sound/key.wav')
 sound_new_level = pygame.mixer.Sound('sound/new_level.wav')
 sound_trampoline = pygame.mixer.Sound('sound/trampoline.wav')
+sound_no_bullets = pygame.mixer.Sound('sound/no_bullets.wav')
 
 background_image = pygame.image.load('background1.png').convert_alpha()
 hero_right = pygame.image.load('mario_right.png').convert_alpha()
@@ -76,8 +79,8 @@ pistol_left = pygame.image.load('pistol_left.png').convert_alpha()
 pistol_right = pygame.image.load('pistol_right.png').convert_alpha()
 shotgun_left = pygame.image.load('shotgun_left.png').convert_alpha()
 shotgun_right = pygame.image.load('shotgun_right.png').convert_alpha()
-Pulemet_right = pygame.image.load('Pulemet_right.png').convert_alpha()
-Pulemet_left = pygame.image.load('Pulemet_left.png').convert_alpha()
+machine_gun_right = pygame.image.load('machine_gun_right.png').convert_alpha()
+machine_gun_left = pygame.image.load('machine_gun_left.png').convert_alpha()
 
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
 hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
@@ -102,8 +105,8 @@ pistol_left = pygame.transform.scale(pistol_left, (block_size, block_size))
 pistol_right = pygame.transform.scale(pistol_right, (block_size, block_size))
 shotgun_left = pygame.transform.scale(shotgun_left, (block_size, block_size))
 shotgun_right = pygame.transform.scale(shotgun_right, (block_size, block_size))
-Pulemet_left = pygame.transform.scale(Pulemet_left, (block_size, block_size))
-Pulemet_right = pygame.transform.scale(Pulemet_right, (block_size, block_size))
+machine_gun_left = pygame.transform.scale(machine_gun_left, (block_size, block_size))
+machine_gun_right = pygame.transform.scale(machine_gun_right, (block_size, block_size))
 
 
 class Player(pygame.sprite.Sprite):
@@ -184,7 +187,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def shoot(self):
-        pygame.mixer.Channel(1).play(sound_shotgun)
+        pygame.mixer.Channel(1).play(self.gun.sound)
         bullets_list = self.gun.prepare_bullets()
         for bullet in bullets_list:
             mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -325,7 +328,7 @@ class Mob(pygame.sprite.Sprite):
         self.trigger_old = self.trigger
 
     def shoot(self):
-        pygame.mixer.Channel(2).play(sound_gun)
+        pygame.mixer.Channel(2).play(self.gun.sound)
         bullet = Bullet(self.rect.centerx, self.rect.centery, self.gun)
         mouse_x, mouse_y = player.rect.centerx, player.rect.centery
         rel_x, rel_y = mouse_x - bullet.rect.x, mouse_y - bullet.rect.y
@@ -334,8 +337,8 @@ class Mob(pygame.sprite.Sprite):
         lendth_vector = math.sqrt(rel_x**2 + rel_y**2)
         if lendth_vector != 0:
             norm_vector_x, norm_vector_y = rel_x / lendth_vector, rel_y / lendth_vector
-            bullet.h_speed = int(norm_vector_x * 30)
-            bullet.v_speed = int(norm_vector_y * 30)
+            bullet.h_speed = int(norm_vector_x * self.gun.bullet_speed)
+            bullet.v_speed = int(norm_vector_y * self.gun.bullet_speed)
             all_sprites.add(bullet)
             bullets_enemy.add(bullet)
 
@@ -369,6 +372,7 @@ class Weapon(pygame.sprite.Sprite):
         self.rect.x = 0
         self.rect.y = 0
         self.reload = reload
+        self.automate_shooting = False
 
     def update(self):
         global camera_x, camera_y
@@ -401,6 +405,8 @@ class WeaponPistol(Weapon):
         self.image_right = pygame.transform.scale(pistol_right, (int(gun_size*0.5), int(gun_size*0.5)))
         self.bullet_speed = 30
         self.damage = 10
+        self.automate = False
+        self.sound = sound_gun
 
     def prepare_bullets(self):
         bullets = [Bullet(self.rect.centerx, self.rect.centery, self)]
@@ -414,6 +420,8 @@ class WeaponShotgun(Weapon):
         self.image_right = pygame.transform.scale(shotgun_right, (gun_size, gun_size//2))
         self.bullet_speed = 50
         self.damage = 10
+        self.automate = False
+        self.sound = sound_shotgun
 
     def prepare_bullets(self):
         bullets_list = [
@@ -425,44 +433,26 @@ class WeaponShotgun(Weapon):
             ]
         return bullets_list
 
-class WeaponPulemet(Weapon):
+class WeaponMachineGun(Weapon):
     def __init__(self, reload):
-        super(WeaponPulemet, self).__init__(reload)
-        self.image = pygame.transform.scale(Pulemet_left, (gun_size, gun_size//2))
-        self.image_left = pygame.transform.scale(Pulemet_left, (gun_size, gun_size//2))
-        self.image_right = pygame.transform.scale(Pulemet_right, (gun_size, gun_size//2))
-        self.bullet_speed = 50
+        super(WeaponMachineGun, self).__init__(reload)
+        self.image = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
+        self.image_left = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
+        self.image_right = pygame.transform.scale(machine_gun_right, (gun_size, gun_size//2))
+        self.bullet_speed = 60
         self.damage = 10
+        self.automate = True
+        self.automate_shooting = False
+        self.bullets_number = 15
+        self.bullets_left = self.bullets_number
+        self.SPS = 8
+        self.sound = sound_machinegun
 
     def prepare_bullets(self):
         bullets_list = [
             Bullet(self.rect.centerx, self.rect.centery, self),
-            Bullet(self.rect.centerx, self.rect.centery + 4, self),
-            Bullet(self.rect.centerx, self.rect.centery - 4, self),
-            Bullet(self.rect.centerx, self.rect.centery + 8, self),
-            Bullet(self.rect.centerx, self.rect.centery - 8, self),
             ]
         return bullets_list
-class WeaponPulemet2(Weapon):
-    def __init__(self, reload):
-        super(WeaponPulemet2, self).__init__(reload)
-        self.image = pygame.transform.scale(gun_left, (gun_size, gun_size//2))
-        self.image_left = pygame.transform.scale(gun_left, (gun_size, gun_size//2))
-        self.image_right = pygame.transform.scale(gun_right, (gun_size, gun_size//2))
-        self.bullet_speed = 50
-        self.damage = 10
-
-    def prepare_bullets(self):
-        bullets_list = [
-            Bullet(self.rect.centerx, self.rect.centery, self),
-            Bullet(self.rect.centerx, self.rect.centery + 4, self),
-            Bullet(self.rect.centerx, self.rect.centery - 4, self),
-            Bullet(self.rect.centerx, self.rect.centery + 8, self),
-            Bullet(self.rect.centerx, self.rect.centery - 8, self),
-            ]
-        return bullets_list
-
-
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, gun):
@@ -614,6 +604,18 @@ def draw_shield_bar(length, height, x, y, health, color):
     fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
     pygame.draw.rect(screen, color, fill_rect)
     pygame.draw.rect(screen, WHITE, outline_rect, 2)
+
+def automate_shoot(charachter, current_time, button_press_time):
+    if charachter.gun.automate_shooting and charachter.gun.bullets_left > 0 and current_time - button_press_time > charachter.gun.reload:
+        charachter.shoot()
+        charachter.gun.bullets_left -= 1
+
+    if charachter.gun.automate and charachter.gun.bullets_left <= 0:
+        charachter.gun.bullets_left = charachter.gun.bullets_number
+        pygame.mixer.Channel(1).play(sound_no_bullets)
+        button_press_time = pygame.time.get_ticks()
+
+    return button_press_time
 
 def collide(sprite1, sprite2):
     global HEIGHT, state_game_over, state
@@ -850,7 +852,7 @@ while done:
                         # all_sprites.add(gun)
 
 
-            gun = WeaponPulemet(1000)
+            gun = WeaponMachineGun(1000)
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
@@ -867,8 +869,12 @@ while done:
     if state == state_play:
         sound_gameover.stop()
         pygame.mixer.music.unpause()
-        # print(a[-1].rect.x, a[-1].rect.y)
         current_time = pygame.time.get_ticks()
+
+        if current_time - timer_for_shooting > 1000 // player.gun.SPS:
+            button_press_time = automate_shoot(player, current_time, button_press_time)
+            timer_for_shooting = pygame.time.get_ticks()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = False
@@ -876,10 +882,20 @@ while done:
                 if event.key == pygame.K_ESCAPE:
                     done = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if (event.button == 1) and (current_time - button_press_time > gun.reload):
-                    # gun.rotate()
-                    player.shoot()
-                    button_press_time = pygame.time.get_ticks()
+                if player.gun.automate == False:
+                    if (event.button == 1) and (current_time - button_press_time > player.gun.reload):
+                        # gun rotate
+                        player.shoot()
+                        button_press_time = pygame.time.get_ticks()
+
+                if player.gun.automate == True:
+                    if event.button == 1:
+                        player.gun.automate_shooting = True
+                        timer_for_shooting = pygame.time.get_ticks() - 100
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                player.gun.automate_shooting = False
+
 
         all_sprites.update()
         collide(player, blocks)
