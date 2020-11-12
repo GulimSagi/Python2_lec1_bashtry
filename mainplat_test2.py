@@ -42,6 +42,7 @@ pygame.mixer.music.play(-1)
 sound_coin = pygame.mixer.Sound('sound/coin.wav')
 sound_jump = pygame.mixer.Sound('sound/jump.wav')
 sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav')
+sound_Pulemet = pygame.mixer.Sound('sound/machinegun.wav')
 sound_run = pygame.mixer.Sound('sound/run.wav')
 sound_gun = pygame.mixer.Sound('sound/gun.wav')
 sound_gameover = pygame.mixer.Sound('sound/gameover.wav')
@@ -163,16 +164,16 @@ class Player(pygame.sprite.Sprite):
                 self.v_speed = -self.jump_height
                 self.jump_is_allowed = False
         if keystate[pygame.K_LEFT]:
-            self.gun.look_left = True
-            self.look_left = True
-            self.image = self.image_left
-            self.gun.image = self.gun.image_left
+            #self.gun.look_left = True
+            #self.look_left = True
+            #self.image = self.image_left
+            #self.gun.image = self.gun.image_left
             self.h_speed = -7
         if keystate[pygame.K_RIGHT]:
-            self.gun.look_left = False
-            self.look_left = False
-            self.image = self.image_right
-            self.gun.image = self.gun.image_right
+            #self.gun.look_left = False
+            #self.look_left = False
+            #self.image = self.image_right
+            #self.gun.image = self.gun.image_right
             self.h_speed = 7
         self.x = self.rect.x
         self.y = self.rect.y
@@ -183,7 +184,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def shoot(self):
-        sound_shotgun.play()
+        pygame.mixer.Channel(1).play(sound_shotgun)
         bullets_list = self.gun.prepare_bullets()
         for bullet in bullets_list:
             mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -324,7 +325,7 @@ class Mob(pygame.sprite.Sprite):
         self.trigger_old = self.trigger
 
     def shoot(self):
-        sound_gun.play()
+        pygame.mixer.Channel(2).play(sound_gun)
         bullet = Bullet(self.rect.centerx, self.rect.centery, self.gun)
         mouse_x, mouse_y = player.rect.centerx, player.rect.centery
         rel_x, rel_y = mouse_x - bullet.rect.x, mouse_y - bullet.rect.y
@@ -628,7 +629,7 @@ def collide(sprite1, sprite2):
                 r_from_below = sprite1.y - collision.rect.y - block_size
                 if (abs(sprite1.x + block_size//2 - collision.rect.centerx) < block_size) and ((((sprite1.rect.bottom - collision.rect.top) < 1) or ((sprite1.rect.top - collision.rect.bottom) < 1))) and (r_from_above >= 0 or r_from_below >= 0):
                     if sprite1.h_speed > 0:
-                        sound_run.play()
+                        pygame.mixer.Channel(3).play(sound_run)
                     if sprite1.v_speed > 0:
                         sprite1.rect.y = sprite1.y + r_from_above
                         sprite1.jump_is_allowed = True
@@ -676,7 +677,7 @@ def collide(sprite1, sprite2):
                             mob.rect.y = mob.y - r_from_below
                         mob.v_speed = 0
                         if collision.jump:
-                            sound_trampoline.play()
+                            pygame.mixer.Channel(4).play(sound_trampoline)
                             mob.jump_height = 32
                             mob.v_speed = -mob.jump_height
                             mob.jump_is_allowed = False
