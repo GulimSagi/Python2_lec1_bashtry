@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+import sys
 
 WIDTH = 1080
 HEIGHT = 768
@@ -32,6 +33,7 @@ state_game_over = "game over"
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 pygame.mixer.music.load('sound/b_music.wav')
@@ -96,6 +98,7 @@ pistol_left = pygame.transform.scale(pistol_left, (block_size, block_size))
 pistol_right = pygame.transform.scale(pistol_right, (block_size, block_size))
 shotgun_left = pygame.transform.scale(shotgun_left, (block_size, block_size))
 shotgun_right = pygame.transform.scale(shotgun_right, (block_size, block_size))
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, gun):
@@ -503,6 +506,52 @@ class X_ray(pygame.sprite.Sprite):
         if self.rect.bottom < -2000 or self.rect.left > WIDTH - camera_x or self.rect.right + camera_x < 0 or self.rect.top > 2000:
             self.kill()
 
+class Menu:
+    def __init__(self, punkts = [0, 0, 'punkt', (250, 250, 30), (250, 30, 250)]):
+        self.punkts = punkts
+
+    def render(self, poverhost, font, num_punkt):
+        for i in self.punkts:
+            if num_punkt == i[5]:
+                poverhost.blit(font.render(i[2], 1, i[4]), (i[0], i[1] + 60))
+            else:
+                poverhost.blit(font.render(i[2], 1, i[3]), (i[0], i[1] + 60))
+
+    def menu(self):
+        igra = True
+        font_menu = pygame.font.Font("super_mario_bros.otf", 50)
+        pygame.key.set_repeat(0,0)
+        pygame.mouse.set_visible(True)
+        punkt = 0
+        while igra:
+            window.fill((0,100,200))
+
+            mp = pygame.mouse.get_pos()   # learn
+            for i in self.punkts:
+                if mp[0] > i[0] and mp[0] < i[0] + 155 and mp[1] > i[1] and mp[1] > i[1] + 50: # learn
+                    punkt = i[5]
+            self.render(window, font_menu, punkt)
+
+            for i in pygame.event.get():
+                if i.type == pygame.QUIT:
+                    sys.exit()
+                if i.type == pygame.KEYDOWN:    # learn
+                    if i.key == pygame.K_ESCAPE:    # learn
+                        sys.exit()
+                    if i.key == pygame.K_UP:
+                        if punkt > 0:
+                            punkt -= 1
+                    if i.key == pygame.K_DOWN:
+                        if punkt < len(self.punkts) - 1:
+                            punkt += 1
+                if i.type == pygame.MOUSEBUTTONDOWN and i.button == 1:
+                    if punkt == 0:
+                        igra = False
+                    elif punkt == 1:
+                        sys.exit()
+            screen.blit(window, (0, 0))
+            pygame.display.flip()
+
 #Functions
 def load_game_map():
     global game_map
@@ -672,7 +721,11 @@ game_map = []
 gravity = 1
 state = state_start
 waiting_command = 0
+punkts =[(450, 250, "Start", (250, 250, 30), (250, 30, 250), 0),
+(480, 350, "Quit", (250, 250, 30), (250, 30, 250), 1)]
+game = Menu(punkts)
 
+game.menu()
 done = True
 while done:
     screen.blit(background_image, (0,0))
