@@ -30,9 +30,21 @@ state_play = "play"
 state_game_over = "game over"
 
 pygame.init()
-# pygame.mixer.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
+
+pygame.mixer.music.load('sound/b_music.wav')
+pygame.mixer.music.play(-1)
+sound_coin = pygame.mixer.Sound('sound/coin.wav')
+sound_jump = pygame.mixer.Sound('sound/jump.wav')
+sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav')
+sound_run = pygame.mixer.Sound('sound/run.wav')
+sound_gun = pygame.mixer.Sound('sound/gun.wav')
+sound_gameover = pygame.mixer.Sound('sound/gameover.wav')
+sound_key = pygame.mixer.Sound('sound/key.wav')
+sound_new_level = pygame.mixer.Sound('sound/new_level.wav')
+sound_trampoline = pygame.mixer.Sound('sound/trampoline.wav')
 
 background_image = pygame.image.load('background1.png').convert_alpha()
 hero_right = pygame.image.load('mario_right.png').convert_alpha()
@@ -116,6 +128,7 @@ class Player(pygame.sprite.Sprite):
         camera_y = -self.rect.y + HEIGHT * 0.1
 
         if self.y > HEIGHT + 200:
+            sound_gameover.play()
             self.kill()
             state = state_game_over
 
@@ -138,6 +151,7 @@ class Player(pygame.sprite.Sprite):
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_SPACE] or keystate[pygame.K_UP]:
             if self.jump_is_allowed:
+                sound_jump.play()
                 self.v_speed = -self.jump_height
                 self.jump_is_allowed = False
         if keystate[pygame.K_LEFT]:
@@ -161,6 +175,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def shoot(self):
+        sound_shotgun.play()
         bullets_list = self.gun.prepare_bullets()
         for bullet in bullets_list:
             mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -301,6 +316,7 @@ class Mob(pygame.sprite.Sprite):
         self.trigger_old = self.trigger
 
     def shoot(self):
+        sound_gun.play()
         bullet = Bullet(self.rect.centerx, self.rect.centery, self.gun)
         mouse_x, mouse_y = player.rect.centerx, player.rect.centery
         rel_x, rel_y = mouse_x - bullet.rect.x, mouse_y - bullet.rect.y
@@ -449,6 +465,7 @@ class Door(pygame.sprite.Sprite):
 
     def check_key(self):
         if player.keys == 1:
+            sound_new_level.play()
             self.image = opened_door
             player.keys -= 1
 
@@ -518,6 +535,8 @@ def collide(sprite1, sprite2):
                 r_from_above = collision.rect.y - sprite1.y - block_size
                 r_from_below = sprite1.y - collision.rect.y - block_size
                 if (abs(sprite1.x + block_size//2 - collision.rect.centerx) < block_size) and ((((sprite1.rect.bottom - collision.rect.top) < 1) or ((sprite1.rect.top - collision.rect.bottom) < 1))) and (r_from_above >= 0 or r_from_below >= 0):
+                    if sprite1.h_speed > 0:
+                        sound_run.play()
                     if sprite1.v_speed > 0:
                         sprite1.rect.y = sprite1.y + r_from_above
                         sprite1.jump_is_allowed = True
@@ -565,6 +584,7 @@ def collide(sprite1, sprite2):
                             mob.rect.y = mob.y - r_from_below
                         mob.v_speed = 0
                         if collision.jump:
+                            sound_trampoline.play()
                             mob.jump_height = 32
                             mob.v_speed = -mob.jump_height
                             mob.jump_is_allowed = False
@@ -590,11 +610,13 @@ def collide(sprite1, sprite2):
     elif sprite1 == player and sprite2 == coins:
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
+                sound_coin.play()
                 collision.kill()
                 sprite1.add_points()
     elif sprite1 == player and sprite2 == keys:
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
+                sound_key.play()
                 collision.kill()
                 sprite1.add_key()
     elif sprite1 == player and sprite2 == door1:
@@ -731,7 +753,7 @@ while done:
                         # all_sprites.add(gun)
 
 
-            gun = WeaponShotgun(60)
+            gun = WeaponShotgun(1000)
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
@@ -746,6 +768,8 @@ while done:
         waiting_command += 1
 
     if state == state_play:
+        sound_gameover.stop()
+        pygame.mixer.music.unpause()
         # print(a[-1].rect.x, a[-1].rect.y)
         current_time = pygame.time.get_ticks()
         for event in pygame.event.get():
@@ -795,9 +819,11 @@ while done:
             draw_shield_bar(60, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, RED)
 
         if player.health <= 0:
+            sound_gameover.play()
             state = state_game_over 
 
     if state == state_game_over:
+        pygame.mixer.music.pause()
         screen.blit(text_game_over, (50, 50))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
