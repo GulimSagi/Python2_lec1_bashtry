@@ -61,7 +61,8 @@ pistol_right = pygame.image.load('pistol_right.png').convert_alpha()
 shotgun_left = pygame.image.load('shotgun_left.png').convert_alpha()
 shotgun_right = pygame.image.load('shotgun_right.png').convert_alpha()
 
-
+hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
+hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
 ground = pygame.transform.scale(ground, (block_size, block_size))
 mud = pygame.transform.scale(mud, (block_size, block_size))
 brick = pygame.transform.scale(brick, (block_size, block_size))
@@ -95,9 +96,9 @@ class Player(pygame.sprite.Sprite):
         self.health = 100
         self.points = 0
         self.keys = 0
-        self.image = pygame.transform.scale(hero_right, (block_size, block_size))
-        self.image_left = pygame.transform.scale(hero_left, (block_size, block_size))
-        self.image_right = pygame.transform.scale(hero_right, (block_size, block_size))
+        self.image = hero_right
+        self.image_left = hero_left
+        self.image_right = hero_right
         self.rect = self.image.get_rect()
         self.x = 0
         self.y = 0
@@ -117,6 +118,19 @@ class Player(pygame.sprite.Sprite):
         if self.y > HEIGHT + 200:
             self.kill()
             state = state_game_over
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if mouse_x > self.rect.centerx + camera_x:
+            self.image = hero_right
+            self.gun.image = self.gun.image_right
+            self.gun.look_left = False
+            self.look_left = False
+        elif mouse_x < self.rect.centerx + camera_x:
+            self.image = hero_left
+            self.gun.image = self.gun.image_left
+            self.gun.look_left = True
+            self.look_left = True
+
         self.h_speed = 0
         self.v_speed = self.v_speed + gravity
         if self.v_speed > 25:
@@ -128,20 +142,22 @@ class Player(pygame.sprite.Sprite):
                 self.jump_is_allowed = False
         if keystate[pygame.K_LEFT]:
             self.gun.look_left = True
-            self.image = self.image_left
             self.look_left = True
+            self.image = self.image_left
+            self.gun.image = self.gun.image_left
             self.h_speed = -7
         if keystate[pygame.K_RIGHT]:
             self.gun.look_left = False
-            self.image = self.image_right
             self.look_left = False
+            self.image = self.image_right
+            self.gun.image = self.gun.image_right
             self.h_speed = 7
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
-        self.gun.rect.centerx = self.rect.centerx
-        self.gun.rect.centery = self.rect.centery
+        self.gun.rect.x = self.rect.x
+        self.gun.rect.y = self.rect.y + gun_size // 4
 
 
     def shoot(self):
@@ -266,18 +282,22 @@ class Mob(pygame.sprite.Sprite):
             self.jump_is_allowed = False
 
         if self.h_speed > 0:
+            self.gun.rect.x = self.rect.x + gun_size // 2
+            self.gun.rect.y = self.rect.y + gun_size // 4
             self.image = self.image_right
+            self.gun.image = self.gun.image_right
             self.gun.look_left = False
         else:
+            self.gun.rect.x = self.rect.x
+            self.gun.rect.y = self.rect.y + gun_size // 4
             self.image = self.image_left
+            self.gun.image = self.gun.image_left
             self.gun.look_left = True
 
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
-        self.gun.rect.centerx = self.rect.centerx
-        self.gun.rect.centery = self.rect.centery
         self.trigger_old = self.trigger
 
     def shoot(self):
@@ -329,11 +349,11 @@ class Weapon(pygame.sprite.Sprite):
         global camera_x, camera_y
         # self.rect.centerx = player.rect.centerx
         # self.rect.centery = player.rect.centery
-        keystate = pygame.key.get_pressed()
-        if self.look_left == True:
-            self.image = self.image_left
-        if self.look_left == False:
-            self.image = self.image_right
+        # self.look_left = player.look_left
+        # if self.look_left:
+        #     self.image = self.image_left
+        # else:
+        #     self.image = self.image_right
 
     def rotate(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -364,9 +384,9 @@ class WeaponPistol(Weapon):
 class WeaponShotgun(Weapon):
     def __init__(self, reload):
         super(WeaponShotgun, self).__init__(reload)
-        self.image = pygame.transform.scale(shotgun_left, (gun_size, gun_size))
-        self.image_left = pygame.transform.scale(shotgun_left, (gun_size, gun_size))
-        self.image_right = pygame.transform.scale(shotgun_right, (gun_size, gun_size))
+        self.image = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
+        self.image_left = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
+        self.image_right = pygame.transform.scale(shotgun_right, (gun_size, gun_size//2))
         self.bullet_speed = 50
         self.damage = 10
 
