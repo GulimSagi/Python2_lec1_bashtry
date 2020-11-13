@@ -40,7 +40,7 @@ clock = pygame.time.Clock()
 
 pygame.mixer.music.load('sound/TheFatRat_Epic.mp3')
 pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.4)
+pygame.mixer.music.set_volume(0.3)
 sound_coin = pygame.mixer.Sound('sound/coin.wav')
 sound_jump = pygame.mixer.Sound('sound/jump_landing.wav')
 sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav'); sound_shotgun.set_volume(0.5)
@@ -52,6 +52,8 @@ sound_key = pygame.mixer.Sound('sound/key.wav')
 sound_new_level = pygame.mixer.Sound('sound/new_level.wav')
 sound_trampoline = pygame.mixer.Sound('sound/trampoline.wav')
 sound_no_bullets = pygame.mixer.Sound('sound/no_bullets.wav')
+sound_reload_fast = pygame.mixer.Sound('sound/reload3.wav')
+sound_reload_slow = pygame.mixer.Sound('sound/reload5.wav')
 
 background_image = pygame.image.load('background1.png').convert_alpha()
 hero_right = pygame.image.load('mario_right.png').convert_alpha()
@@ -131,8 +133,9 @@ class Player(pygame.sprite.Sprite):
         self.gun = gun
 
     def update(self):
-        global gravity, state, state_game_over, camera_x, camera_y, stable_x, stable_y
+        global gravity, state, state_game_over, camera_x, camera_y, stable_x, stable_y, button_press_time
 
+        self.rotate_gun()
         if self.rect.x + camera_x > WIDTH * 0.65:
             camera_x -= 7
         elif self.rect.x + camera_x < WIDTH * 0.35:
@@ -147,12 +150,10 @@ class Player(pygame.sprite.Sprite):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         if mouse_x > self.rect.centerx + camera_x:
             self.image = hero_right
-            self.gun.image = self.gun.image_right
             self.gun.look_left = False
             self.look_left = False
         elif mouse_x < self.rect.centerx + camera_x:
             self.image = hero_left
-            self.gun.image = self.gun.image_left
             self.gun.look_left = True
             self.look_left = True
 
@@ -161,29 +162,28 @@ class Player(pygame.sprite.Sprite):
         if self.v_speed > 25:
             self.v_speed = 25
         keystate = pygame.key.get_pressed()
-        if keystate[pygame.K_SPACE] or keystate[pygame.K_UP]:
+        if keystate[pygame.K_SPACE] or keystate[pygame.K_w]:
             if self.jump_is_allowed:
                 sound_jump.play()
                 self.v_speed = -self.jump_height
                 self.jump_is_allowed = False
-        if keystate[pygame.K_LEFT]:
-            #self.gun.look_left = True
-            #self.look_left = True
-            #self.image = self.image_left
-            #self.gun.image = self.gun.image_left
+        if keystate[pygame.K_a]:
             self.h_speed = -7
-        if keystate[pygame.K_RIGHT]:
-            #self.gun.look_left = False
-            #self.look_left = False
-            #self.image = self.image_right
-            #self.gun.image = self.gun.image_right
+        if keystate[pygame.K_d]:
             self.h_speed = 7
+        if self.gun.automate and keystate[pygame.K_r] and self.gun.bullets_left < self.gun.bullets_number:
+            pygame.mixer.Channel(1).play(self.gun.sound_reload_fast)
+            self.gun.bullets_left = self.gun.bullets_number
+            button_press_time = pygame.time.get_ticks()
+
+            
+
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
-        self.gun.rect.x = self.rect.x
-        self.gun.rect.y = self.rect.y + gun_size // 4
+        self.gun.rect.centerx = self.rect.centerx 
+        self.gun.rect.centery = self.rect.centery
 
 
     def shoot(self):
@@ -204,6 +204,16 @@ class Player(pygame.sprite.Sprite):
                 all_sprites.add(bullet)
                 bullets.add(bullet)
 
+    def rotate_gun(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        mouse_x -= camera_x
+        mouse_y -= int(camera_y * 0.3)
+        rel_x, rel_y = mouse_x - self.gun.rect.centerx, mouse_y - self.gun.rect.centery
+        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        if self.gun.look_left:
+            self.gun.image = pygame.transform.rotate(pygame.transform.scale(self.gun.image_left, (block_size, block_size)), int(angle - 180))
+        else:
+            self.gun.image = pygame.transform.rotate(pygame.transform.scale(self.gun.image_right, (block_size, block_size)), int(angle))
 
     def add_points(self):
         self.points += 1
@@ -293,9 +303,7 @@ class Mob(pygame.sprite.Sprite):
             else:
                 self.path.pop(0)
 
-            
 
-            
         if self.trigger == False and self.trigger_general == False:
             if self.cycle >= 0:
                 self.h_speed = 2 if bool(self.change) else -2
@@ -309,14 +317,14 @@ class Mob(pygame.sprite.Sprite):
             self.jump_is_allowed = False
 
         if self.h_speed > 0:
-            self.gun.rect.x = self.rect.x + gun_size // 2
-            self.gun.rect.y = self.rect.y + gun_size // 4
+            self.gun.rect.centerx = self.rect.centerx + gun_size // 2
+            self.gun.rect.centery = self.rect.centery + gun_size // 4
             self.image = self.image_right
             self.gun.image = self.gun.image_right
             self.gun.look_left = False
         else:
-            self.gun.rect.x = self.rect.x
-            self.gun.rect.y = self.rect.y + gun_size // 4
+            self.gun.rect.centerx = self.rect.centerx + gun_size // 2
+            self.gun.rect.centery = self.rect.centery + gun_size // 4
             self.image = self.image_left
             self.gun.image = self.gun.image_left
             self.gun.look_left = True
@@ -346,8 +354,6 @@ class Mob(pygame.sprite.Sprite):
         ray = X_ray(self.rect.centerx, self.rect.centery, self)
         mouse_x, mouse_y = player.rect.centerx, player.rect.centery
         rel_x, rel_y = mouse_x - ray.rect.x, mouse_y - ray.rect.y
-        # angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-        # bullet.image = pygame.transform.rotate(bullet.image, int(angle))
         lendth_vector = math.sqrt(rel_x**2 + rel_y**2)
         if lendth_vector != 0:
             norm_vector_x, norm_vector_y = rel_x / lendth_vector, rel_y / lendth_vector
@@ -359,7 +365,82 @@ class Mob(pygame.sprite.Sprite):
 class Boss(Mob):
     def __init__(self, x, y, image_left, image_right, size, gun):
         super(Boss, self).__init__(x, y, image_left, image_right, size, gun)
-        
+        self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size*2, gun_size*2)) 
+        self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size*2, gun_size*2))
+
+
+    def update(self):
+        global gravity, state, state_game_over
+        rand_number = random.randint(1, 4)
+
+        self.shoot_x_ray()
+        if self.y > HEIGHT:
+            self.kill()
+            self.gun.kill()
+
+        self.h_speed = 0
+        self.v_speed = self.v_speed + gravity
+
+        if self.v_speed > 25:
+            self.v_speed = 25
+
+        if self.trigger and self.trigger_general:
+            projection = player.rect.x - self.rect.x
+            self.h_speed = rand_number if bool(projection >= 0) else -rand_number
+            if self.wait_to_shoot == 0:
+                self.shoot()
+            self.path = []
+        self.wait_to_shoot = (self.wait_to_shoot + 1) % self.gun.reload
+
+        if self.trigger == False and self.trigger_old == True:
+            self.path.append((player.rect.x, player.rect.y))
+
+        if self.trigger == False and self.trigger_general == True:
+            self.path.append((player.rect.x, player.rect.y))
+            if self.path != [] and self.rect.x != self.path[0][0] and self.rect.y != self.path[0][1]:
+                projection = self.path[0][0] - self.rect.x
+                self.h_speed = rand_number if bool(projection >= 0) else -rand_number
+            elif self.path != [] and self.rect.x == self.path[0][0] and self.rect.y > self.path[0][1] and self.jump_is_allowed:
+                self.v_speed -= self.jump_height
+                self.jump_is_allowed = False
+
+            # elif self.path == []:
+                # pass
+            else:
+                self.path.pop(0)
+
+
+        if self.trigger == False and self.trigger_general == False:
+            if self.cycle >= 0:
+                self.h_speed = 2 if bool(self.change) else -2
+                self.cycle -= 1
+            else:
+                self.cycle = 130
+                self.change = (self.change + 1) % 2
+
+        if self.collided_with_block and self.jump_is_allowed:
+            self.v_speed -= self.jump_height
+            self.jump_is_allowed = False
+
+        if self.h_speed > 0:
+            self.gun.rect.centerx = self.rect.centerx - gun_size // 4
+            self.gun.rect.centery = self.rect.centery + gun_size // 4
+            self.image = self.image_right
+            self.gun.image = self.gun.image_right
+            self.gun.look_left = False
+        else:
+            self.gun.rect.centerx = self.rect.centerx - gun_size // 4
+            self.gun.rect.centery = self.rect.centery + gun_size // 4
+            self.image = self.image_left
+            self.gun.image = self.gun.image_left
+            self.gun.look_left = True
+
+        self.x = self.rect.x
+        self.y = self.rect.y
+        self.rect.x += self.h_speed
+        self.rect.y += self.v_speed
+        self.trigger_old = self.trigger
+    
 
 class Weapon(pygame.sprite.Sprite):
     def __init__(self, reload):
@@ -376,26 +457,6 @@ class Weapon(pygame.sprite.Sprite):
 
     def update(self):
         global camera_x, camera_y
-        # self.rect.centerx = player.rect.centerx
-        # self.rect.centery = player.rect.centery
-        # self.look_left = player.look_left
-        # if self.look_left:
-        #     self.image = self.image_left
-        # else:
-        #     self.image = self.image_right
-
-    def rotate(self):
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        rel_x, rel_y = mouse_x - self.rect.x, mouse_y - self.rect.y
-        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-        if self.look_left:
-            new_image = pygame.transform.rotate(self.image, int(-angle))
-        else:
-            new_image = pygame.transform.rotate(self.image, int(angle))
-        old_center = self.rect.center
-        self.image = new_image
-        self.rect = self.image.get_rect()
-        self.rect.center = old_center
 
 class WeaponPistol(Weapon):
     def __init__(self, reload):
@@ -447,6 +508,7 @@ class WeaponMachineGun(Weapon):
         self.bullets_left = self.bullets_number
         self.SPS = 8
         self.sound = sound_machinegun
+        self.sound_reload_fast = sound_reload_fast
 
     def prepare_bullets(self):
         bullets_list = [
@@ -460,7 +522,7 @@ class Bullet(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(bullet, (block_size//4, block_size//8))
         self.rect = self.image.get_rect()
         self.rect.x = x
-        self.rect.y = y
+        self.rect.y = y - gun_size // 4
         self.v_speed = -10
         self.h_speed = 10
         self.gun = gun
@@ -613,6 +675,7 @@ def automate_shoot(charachter, current_time, button_press_time):
     if charachter.gun.automate and charachter.gun.bullets_left <= 0:
         charachter.gun.bullets_left = charachter.gun.bullets_number
         pygame.mixer.Channel(1).play(sound_no_bullets)
+        pygame.mixer.Channel(6).play(sound_reload_slow)
         button_press_time = pygame.time.get_ticks()
 
     return button_press_time
@@ -625,7 +688,7 @@ def collide(sprite1, sprite2):
         if collisions == []:
             sprite1.jump_is_allowed = False
         else:
-            sprite1.gun.rect.centery = sprite1.y + block_size // 2
+            # sprite1.gun.rect.centery = sprite1.y + block_size // 2
             for collision in collisions:
                 r_from_above = collision.rect.y - sprite1.y - block_size
                 r_from_below = sprite1.y - collision.rect.y - block_size
@@ -639,6 +702,7 @@ def collide(sprite1, sprite2):
                         sprite1.rect.y = sprite1.y - r_from_below
                     sprite1.v_speed = 0
                     if collision.jump:
+                        pygame.mixer.Channel(6).play(sound_trampoline)
                         sprite1.jump_height = 32
                         sprite1.v_speed = -sprite1.jump_height
                     else:
@@ -679,7 +743,7 @@ def collide(sprite1, sprite2):
                             mob.rect.y = mob.y - r_from_below
                         mob.v_speed = 0
                         if collision.jump:
-                            pygame.mixer.Channel(4).play(sound_trampoline)
+                            pygame.mixer.Channel(7).play(sound_trampoline)
                             mob.jump_height = 32
                             mob.v_speed = -mob.jump_height
                             mob.jump_is_allowed = False
@@ -831,15 +895,12 @@ while done:
                         all_sprites.add(tramp1)
                     if game_map[i][j] == 's':
                         event_blocks['boss'] = [block_size * j, False]
-                        # print(event_blocks['boss'][0], event_blocks['boss'][1])
 
-            # a = []
             for i in range(len(game_map)):
                 for j in range(len(game_map[i])):
                     if game_map[i][j] == 'e':
                         gun = WeaponPistol(60)
                         mob = Mob(block_size * j, block_size * i, enemy1_left, enemy1_right, block_size, gun)
-                        # a.append(mob)
                         mobs.add(mob)
                         all_sprites.add(mob)
                         all_sprites.add(gun)
@@ -867,11 +928,12 @@ while done:
         waiting_command += 1
 
     if state == state_play:
+        # print(player.rect.y, player.y)
         sound_gameover.stop()
         pygame.mixer.music.unpause()
         current_time = pygame.time.get_ticks()
 
-        if current_time - timer_for_shooting > 1000 // player.gun.SPS:
+        if player.gun.automate and current_time - timer_for_shooting > 1000 // player.gun.SPS:
             button_press_time = automate_shoot(player, current_time, button_press_time)
             timer_for_shooting = pygame.time.get_ticks()
 
@@ -884,7 +946,6 @@ while done:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if player.gun.automate == False:
                     if (event.button == 1) and (current_time - button_press_time > player.gun.reload):
-                        # gun rotate
                         player.shoot()
                         button_press_time = pygame.time.get_ticks()
 
@@ -955,5 +1016,27 @@ while done:
 
 pygame.quit()
 
-# turn a turel into a weapon
-# fix the tick and counting variable
+# must be done tasks:
+# turn turel into a weapon (find a good picture)
+# add sound to the turel, it should be really natural to the big gun sound
+# find better sound for game over
+# find why when player is holding a pistol it becames bigger
+# add sound to the turel
+# increase the health of the boss and damage of his weapon, then test it (it should be really hard to defeat the boss, but possible)
+# make a better, bigger, harder map
+# understand the code
+# find better music for the background
+
+# optional tasks:
+# (optional) find a better weapon for the boss
+# (optional) find better pictures of weapons so that when player rotate them, it should look more natural 
+# (optional) make jump_up and jump_landing for different cases (when landing and jumping)
+
+# harder tasks:
+# ANIMATE WHAT YOU CAN
+# find better characthers (pictures) for the: player, enemies, boss
+
+# questions:
+# Will we make the shop?
+# Will there be an another map?
+# Will we animate all the stuff?
