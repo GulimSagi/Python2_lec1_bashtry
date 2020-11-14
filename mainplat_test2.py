@@ -63,6 +63,7 @@ mud = pygame.image.load('mud.png').convert_alpha()
 brick = pygame.image.load('brick.png').convert_alpha()
 trampoline = pygame.image.load('trampoline.png').convert_alpha()
 coin = pygame.image.load('coin.png').convert_alpha()
+heart = pygame.image.load('health.png').convert_alpha()
 enemy1_left = pygame.image.load('enemy1_left.png').convert_alpha()
 enemy1_right = pygame.image.load('enemy1_right.png').convert_alpha()
 bullet = pygame.image.load('bullet.png').convert_alpha()
@@ -91,6 +92,7 @@ mud = pygame.transform.scale(mud, (block_size, block_size))
 brick = pygame.transform.scale(brick, (block_size, block_size))
 trampoline = pygame.transform.scale(trampoline, (block_size, block_size//2))
 coin = pygame.transform.scale(coin, (coin_size, coin_size))
+heart = pygame.transform.scale(heart,(27,23))
 gun_right = pygame.transform.scale(gun_right, (gun_size, gun_size))
 gun_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
 enemy1_left = pygame.transform.scale(enemy1_left, (block_size, block_size))
@@ -98,7 +100,7 @@ enemy1_right = pygame.transform.scale(enemy1_right, (block_size, block_size))
 key = pygame.transform.scale(key, (key_size, key_size))
 closed_door = pygame.transform.scale(closed_door, (block_size, block_size))
 opened_door = pygame.transform.scale(opened_door, (block_size, block_size))
-health = pygame.transform.scale(health, (27, 23))
+health = pygame.transform.scale(health,(coin_size,coin_size))
 tree = pygame.transform.scale(tree, (block_size*2, block_size*2))
 cloud = pygame.transform.scale(cloud, (block_size*2, block_size))
 boss1_left = pygame.transform.scale(boss1_left, (block_size*3, block_size*3))
@@ -231,6 +233,8 @@ class Player(pygame.sprite.Sprite):
         screen.blit(key_image, (10, 50))
         score = font.render(f"{self.keys}", True, (218, 165, 32))
         screen.blit(score, (40, 30))
+  
+        
 
 class Mob(pygame.sprite.Sprite):
     def __init__(self, x, y, image_left, image_right, size, gun):
@@ -576,6 +580,14 @@ class Coin(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+class Heart(pygame.sprite.Sprite):
+    def __init__(self, x, y, image):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
 class Key(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         pygame.sprite.Sprite.__init__(self)
@@ -772,6 +784,12 @@ def collide(sprite1, sprite2):
                 sound_coin.play()
                 collision.kill()
                 sprite1.add_points()
+    elif sprite1 == player and sprite2 == hearts:
+        for collision in sprite2:
+            if sprite1.rect.colliderect(collision.rect):
+                collision.kill()
+                sprite1.add_points()
+    
     elif sprite1 == player and sprite2 == keys:
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
@@ -822,6 +840,7 @@ bullets = pygame.sprite.Group()
 bullets_enemy = pygame.sprite.Group()
 blocks = pygame.sprite.Group()
 coins = pygame.sprite.Group()
+hearts = pygame.sprite.Group()
 keys = pygame.sprite.Group()
 x_rays_enemy = pygame.sprite.Group()
 event_blocks = {}
@@ -884,6 +903,9 @@ while done:
                         coin1 = Coin(block_size * j + coin_size//2, block_size * i + coin_size//2, coin)
                         coins.add(coin1)
                         all_sprites.add(coin1)
+                    if game_map[i][j] == 'h':
+                        heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart)
+                        all_sprites.add(heart1)
                     if game_map[i][j] == 'k':
                         key1 = Key(block_size * j + 10, block_size * i + 10, key)
                         keys.add(key1)
@@ -962,6 +984,7 @@ while done:
         collide(player, blocks)
         collide(player, door1)
         collide(player, coins)
+        collide(player,hearts)
         collide(player, keys)
         collide(bullets, blocks)
         collide(mobs, blocks)
