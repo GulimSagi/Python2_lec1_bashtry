@@ -92,7 +92,7 @@ mud = pygame.transform.scale(mud, (block_size, block_size))
 brick = pygame.transform.scale(brick, (block_size, block_size))
 trampoline = pygame.transform.scale(trampoline, (block_size, block_size//2))
 coin = pygame.transform.scale(coin, (coin_size, coin_size))
-heart = pygame.transform.scale(heart,(27,23))
+heart = pygame.transform.scale(heart,(coin_size, coin_size))
 gun_right = pygame.transform.scale(gun_right, (gun_size, gun_size))
 gun_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
 enemy1_left = pygame.transform.scale(enemy1_left, (block_size, block_size))
@@ -219,7 +219,8 @@ class Player(pygame.sprite.Sprite):
 
     def add_points(self):
         self.points += 1
-
+    def add_health(self):
+        self.health += 20
     def add_key(self):
         self.keys += 1
 
@@ -788,8 +789,7 @@ def collide(sprite1, sprite2):
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
                 collision.kill()
-                sprite1.add_points()
-    
+                sprite1.add_health()
     elif sprite1 == player and sprite2 == keys:
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
@@ -905,6 +905,7 @@ while done:
                         all_sprites.add(coin1)
                     if game_map[i][j] == 'h':
                         heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart)
+                        hearts.add(heart1)
                         all_sprites.add(heart1)
                     if game_map[i][j] == 'k':
                         key1 = Key(block_size * j + 10, block_size * i + 10, key)
