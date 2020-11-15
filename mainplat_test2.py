@@ -220,7 +220,10 @@ class Player(pygame.sprite.Sprite):
     def add_points(self):
         self.points += 1
     def add_health(self):
-        self.health += 20
+        if self.health<=80:
+            self.health+=20
+        else:
+            self.health=100
     def add_key(self):
         self.keys += 1
 

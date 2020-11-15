@@ -10,7 +10,7 @@
                                                                         c          g                  сgmmmmmmmmmmmmmmmmmm                   mmmmmmmmmmmmmmmm
                                                                         g     c                      hgmmmmmmmmmmmmmmmmmmm                   mmmmmmmmmmmmmmmm
                                                                               g     c               cgmmmmmmmmmmmmmmmmmmmmt        Ek       tmmmmmmmmmmmmmmmm
-  T     CT  e    1 T    e    T            h                           h             g      c  c    cgmmmmmmmmmmmmmmmmmmmmmgggggggggggggggggggmmmmmmmmmmmmmmmm            
-ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg         g      c             g  g  gggmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+  T     CT  e    1 T    e    T            h                          h             g      c  c    cgmmmmmmmmmmmmmmmmmmmmmgggggggggggggggggggmmmmmmmmmmmmmmmm          
+ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg        g      c             g  g  gggmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm    c           g       c           mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm    g                   g           mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
