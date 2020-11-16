@@ -90,6 +90,7 @@ coins_list=[pygame.image.load('coin_1.png').convert_alpha(),
        pygame.image.load('coin_3.png').convert_alpha(),
        pygame.image.load('coin_4.png').convert_alpha(),
        pygame.image.load('coin_5.png').convert_alpha()]
+case = pygame.image.load('case.png').convert_alpha()
 
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
 hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
@@ -119,6 +120,7 @@ machine_gun_left = pygame.transform.scale(machine_gun_left, (block_size, block_s
 machine_gun_right = pygame.transform.scale(machine_gun_right, (block_size, block_size))
 for i in range(len(coins_list)):
     coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
+case = pygame.transform.scale(case,(block_size,block_size))
     
 class Player(pygame.sprite.Sprite):
     def __init__(self, gun):
@@ -233,7 +235,8 @@ class Player(pygame.sprite.Sprite):
             self.health=100
     def add_key(self):
         self.keys += 1
-
+    def add_gun(self,gun):
+        self.gun = gun
     def show_points(self):
         screen.blit(coin, (10, 10))
         score = font.render(f"{self.points}", True, (255, 204, 0))
@@ -458,7 +461,7 @@ class Boss(Mob):
     
 
 class Weapon(pygame.sprite.Sprite):
-    def __init__(self, reload):
+    def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(gun_right, (gun_size, gun_size))
         self.image_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
@@ -467,21 +470,21 @@ class Weapon(pygame.sprite.Sprite):
         self.look_left = False
         self.rect.x = 0
         self.rect.y = 0
-        self.reload = reload
         self.automate_shooting = False
 
     def update(self):
         global camera_x, camera_y
 
 class WeaponPistol(Weapon):
-    def __init__(self, reload):
-        super(WeaponPistol, self).__init__(reload)
+    def __init__(self):
+        super(WeaponPistol, self).__init__()
         self.image = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
         self.image_left = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
         self.image_right = pygame.transform.scale(pistol_right, (int(gun_size*0.5), int(gun_size*0.5)))
         self.bullet_speed = 30
         self.damage = 10
         self.automate = False
+        self.reload = 500
         self.sound = sound_gun
 
     def prepare_bullets(self):
@@ -489,14 +492,15 @@ class WeaponPistol(Weapon):
         return bullets
 
 class WeaponShotgun(Weapon):
-    def __init__(self, reload):
-        super(WeaponShotgun, self).__init__(reload)
+    def __init__(self):
+        super(WeaponShotgun, self).__init__()
         self.image = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
         self.image_left = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
         self.image_right = pygame.transform.scale(shotgun_right, (gun_size, gun_size//2))
         self.bullet_speed = 50
         self.damage = 10
         self.automate = False
+        self.reload = 1000
         self.sound = sound_shotgun
 
     def prepare_bullets(self):
@@ -510,12 +514,13 @@ class WeaponShotgun(Weapon):
         return bullets_list
 
 class WeaponMachineGun(Weapon):
-    def __init__(self, reload):
-        super(WeaponMachineGun, self).__init__(reload)
+    def __init__(self):
+        super(WeaponMachineGun, self).__init__()
         self.image = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
         self.image_left = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
         self.image_right = pygame.transform.scale(machine_gun_right, (gun_size, gun_size//2))
         self.bullet_speed = 60
+        self.reload = 1500
         self.damage = 10
         self.automate = True
         self.automate_shooting = False
@@ -560,13 +565,21 @@ class Block(pygame.sprite.Sprite):
         self.shooting = False
 
     def shoot(self):
-        bullet = Bullet(self.rect.centerx - block_size, self.rect.centery, WeaponPistol(1000))
+        bullet = Bullet(self.rect.centerx - block_size, self.rect.centery, WeaponPistol())
         bullet.image = pygame.transform.rotate(bullet.image, 180)
         bullet.h_speed = -10
         bullet.v_speed = 0
         bullets_enemy.add(bullet)
         bullets.add(bullet)
         all_sprites.add(bullet)
+        
+    def buy_weapon(self):
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_e]:
+            player.gun.kill()
+            gun = WeaponMachineGun()
+            all_sprites.add(gun)
+            player.add_gun(gun)
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
@@ -814,6 +827,10 @@ def collide(sprite1, sprite2):
     elif sprite1 == player and sprite2 == door1:
         if sprite1.rect.colliderect(sprite2.rect):
             sprite2.check_key()
+    elif sprite1 == player and sprite2 == case1:
+        if sprite1.rect.colliderect(sprite2.rect):
+            sprite2.buy_weapon()
+    
     elif (sprite1 == bullets or sprite1 == bullets_enemy) and sprite2 == blocks:
         hits = pygame.sprite.groupcollide(sprite1, sprite2, True, False)
         for hit in hits:
@@ -918,6 +935,9 @@ while done:
                         coin1 = Coin(block_size * j + coin_size//2, block_size * i + coin_size//2, coins_list[0])
                         coins.add(coin1)
                         all_sprites.add(coin1)
+                    if game_map[i][j] == 'C':
+                        case1 = Block(block_size*j, block_size * i, case)
+                        all_sprites.add(case1)
                     if game_map[i][j] == 'h':
                         heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart)
                         hearts.add(heart1)
@@ -937,21 +957,21 @@ while done:
             for i in range(len(game_map)):
                 for j in range(len(game_map[i])):
                     if game_map[i][j] == 'e':
-                        gun = WeaponPistol(60)
+                        gun = WeaponPistol()
                         mob = Mob(block_size * j, block_size * i, enemy1_left, enemy1_right, block_size, gun)
                         mobs.add(mob)
                         all_sprites.add(mob)
                         all_sprites.add(gun)
 
                     if game_map[i][j] == 'B':
-                        gun = WeaponShotgun(60)
+                        gun = WeaponShotgun()
                         boss1 = Boss(block_size * j, block_size * i, boss1_left, boss1_right, block_size*3, gun)
                         # mobs.add(boss1)
                         # all_sprites.add(boss1)
                         # all_sprites.add(gun)
 
 
-            gun = WeaponMachineGun(1000)
+            gun = WeaponPistol()
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
@@ -1002,6 +1022,7 @@ while done:
         collide(player, coins)
         collide(player,hearts)
         collide(player, keys)
+        collide(player, case1)
         collide(bullets, blocks)
         collide(mobs, blocks)
         collide(bullets_enemy, blocks)
