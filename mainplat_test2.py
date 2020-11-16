@@ -31,6 +31,7 @@ text_game_over = font.render("Game Over", True, RED)
 text_buy_gun = font.render("-1 points", True, COIN)
 text_no_coin = font.render("You need 1 points to buy", True, RED)
 text_full_gun = font.render("You have already received a weapon", True, RED)
+text_success_purchase = font.render("You have boughe a weapon!", True, GREEN)
 
 state_start = "welcome"
 state_play = "play"
@@ -95,6 +96,26 @@ coins_list=[pygame.image.load('coin1.png').convert_alpha(),
        pygame.image.load('coin4.png').convert_alpha(),
        pygame.image.load('coin5.png').convert_alpha()]
 case = pygame.image.load('case.png').convert_alpha()
+enemy_list_left = []
+enemy_list_right = []
+enemy_stay_left = pygame.image.load('enemy/stay_left.png').convert_alpha()
+enemy_stay_right = pygame.image.load('enemy/stay_right.png').convert_alpha()
+hero_list_left = []
+hero_list_right = []
+hero_stay_left = pygame.image.load('hero/stay_left.png').convert_alpha()
+hero_stay_right = pygame.image.load('hero/stay_right.png').convert_alpha()
+
+for i in range(10):
+    enemy_list_right.append(pygame.image.load(f'enemy/walk_rigint_{i + 1}.png').convert_alpha())
+for i in range(10):
+    enemy_list_left.append(pygame.image.load(f'enemy/walk_left_{i + 1}.png').convert_alpha())
+    
+for i in range(10):
+    hero_list_left.append(pygame.image.load(f'hero/run_left_{i + 1}.png').convert_alpha())
+for i in range(10):
+    hero_list_right.append(pygame.image.load(f'hero/run_{i + 1}.png').convert_alpha())
+
+
 
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
 hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
@@ -122,9 +143,22 @@ shotgun_left = pygame.transform.scale(shotgun_left, (block_size, block_size))
 shotgun_right = pygame.transform.scale(shotgun_right, (block_size, block_size))
 machine_gun_left = pygame.transform.scale(machine_gun_left, (block_size, block_size))
 machine_gun_right = pygame.transform.scale(machine_gun_right, (block_size, block_size))
+enemy_stay_left = pygame.transform.scale(enemy_stay_left, (block_size, block_size))
+enemy_stay_right = pygame.transform.scale(enemy_stay_right, (block_size, block_size))
+hero_stay_left = pygame.transform.scale(hero_stay_left, (block_size, block_size))
+hero_stay_right = pygame.transform.scale(hero_stay_right, (block_size, block_size))
+
 for i in range(len(coins_list)):
     coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
 case = pygame.transform.scale(case,(block_size,block_size))
+for i in range(len(enemy_list_left)):
+    enemy_list_left[i] = pygame.transform.scale(enemy_list_left[i], (block_size, block_size))
+    enemy_list_right[i] = pygame.transform.scale(enemy_list_right[i], (block_size, block_size))
+for i in range(len(enemy_list_left)):
+    hero_list_left[i] = pygame.transform.scale(hero_list_left[i], (block_size, block_size))
+    hero_list_right[i] = pygame.transform.scale(hero_list_right[i], (block_size, block_size))
+
+
     
 class Player(pygame.sprite.Sprite):
     def __init__(self, gun):
@@ -137,15 +171,16 @@ class Player(pygame.sprite.Sprite):
         self.health = 100
         self.points = 0
         self.keys = 0
-        self.image = hero_right
-        self.image_left = hero_left
-        self.image_right = hero_right
+        self.image_left = hero_stay_left
+        self.image_right = hero_stay_right
+        self.image = self.image_right
         self.rect = self.image.get_rect()
         self.x = 0
         self.y = 0
         self.camera_x = 0
         self.camera_y = 0
         self.gun = gun
+        self.hero_png_iteration = 0
 
     def update(self):
         global gravity, state, state_game_over, camera_x, camera_y, stable_x, stable_y, button_press_time
@@ -163,14 +198,19 @@ class Player(pygame.sprite.Sprite):
             state = state_game_over
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        if mouse_x > self.rect.centerx + camera_x:
-            self.image = hero_right
+        if mouse_x > self.rect.centerx + camera_x and self.h_speed != 0:
+            self.image = hero_list_right[self.hero_png_iteration // 3]
             self.gun.look_left = False
             self.look_left = False
-        elif mouse_x < self.rect.centerx + camera_x:
-            self.image = hero_left
+        elif mouse_x < self.rect.centerx + camera_x and self.h_speed != 0:
+            self.image = hero_list_left[self.hero_png_iteration // 3]
             self.gun.look_left = True
             self.look_left = True
+        elif self.h_speed == 0 and self.look_left:
+            self.image = self.image_left
+        elif self.h_speed == 0 and not self.look_left:
+            self.image = self.image_right
+        
 
         self.h_speed = 0
         self.v_speed = self.v_speed + gravity
@@ -192,6 +232,7 @@ class Player(pygame.sprite.Sprite):
             button_press_time = pygame.time.get_ticks()
 
             
+        self.hero_png_iteration = (self.hero_png_iteration + 1) % (3 * len(hero_list_right))
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -283,6 +324,7 @@ class Mob(pygame.sprite.Sprite):
         self.gun = gun
         self.current_time = pygame.time.get_ticks()
         self.time_shoot = self.current_time - self.gun.reload
+        self.enemy_png_iteration = 0
 
     def update(self):
         global gravity, state, state_game_over
@@ -340,15 +382,21 @@ class Mob(pygame.sprite.Sprite):
         if self.h_speed > 0:
             self.gun.rect.centerx = self.rect.centerx + gun_size // 2
             self.gun.rect.centery = self.rect.centery + gun_size // 4
-            self.image = self.image_right
+            self.image = enemy_list_right[self.enemy_png_iteration // 3]
             self.gun.image = self.gun.image_right
             self.gun.look_left = False
-        else:
+        elif self.h_speed < 0:
             self.gun.rect.centerx = self.rect.centerx + gun_size // 2
             self.gun.rect.centery = self.rect.centery + gun_size // 4
-            self.image = self.image_left
+            self.image = enemy_list_left[self.enemy_png_iteration // 3]
             self.gun.image = self.gun.image_left
             self.gun.look_left = True
+        elif self.look_left and self.h_speed == 0:
+            self.image = enemy_stay_left
+        elif self.look_left == False and self.h_speed == 0:
+            self.image = enemy_stay_right
+        
+        self.enemy_png_iteration = (self.enemy_png_iteration + 1) % (3 * len(enemy_list_left))
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -388,6 +436,8 @@ class Boss(Mob):
         super(Boss, self).__init__(x, y, image_left, image_right, size, gun)
         self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size*2, gun_size*2)) 
         self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size*2, gun_size*2))
+        # self.image_left = image_left
+        # self.image_right = image_right
 
 
     def update(self):
@@ -569,6 +619,9 @@ class Block(pygame.sprite.Sprite):
         self.active = False
         self.have_bought = False
         self.button_sell_time = 0
+        self.have_money = False
+        self.counter_for_text = 0
+        self.start_counting = False
 
     def shoot(self):
         bullet = Bullet(self.rect.centerx - block_size, self.rect.centery, WeaponPistol())
@@ -580,11 +633,12 @@ class Block(pygame.sprite.Sprite):
         all_sprites.add(bullet)
 
     def buy_weapon(self):
-        keystate = pygame.key.get_pressed()
-        if keystate[pygame.K_e]:
+        if player.points >= 1:
+            self.have_money = True
             self.button_sell_time = pygame.time.get_ticks()
-            if self.active:
-                if player.points >= 1:
+            keystate = pygame.key.get_pressed()
+            if keystate[pygame.K_e]:
+                if self.active:
                     self.active = False
                     player.points -= 1
                     player.gun.kill()
@@ -592,22 +646,24 @@ class Block(pygame.sprite.Sprite):
                     all_sprites.add(gun)
                     player.add_gun(gun)
                     self.have_bought = True
-                    self.have_money = True
-                    # self.c =False
-                # else:
-                #     self.have_bought = False
-                #     # self.c = False
+        else:
+            self.have_money = False
+            self.button_sell_time = pygame.time.get_ticks()
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.button_sell_time < 2000 and self.a:
-            screen.blit(text_buy_gun, (80, -10))
-        elif current_time - self.button_sell_time < 2000 and self.b:
+        if current_time - self.button_sell_time < 2000 and self.have_money == False and self.have_bought == False:
             screen.blit(text_no_coin, (80, -10))
-        elif current_time - self.button_sell_time < 2000 and not self.active:
-            screen.blit(text_full_gun, (80, -10))
+        elif current_time - self.button_sell_time < 2000 and self.have_bought == False:
+            screen.blit(text_buy_gun, (80, -10))
+        elif current_time - self.button_sell_time < 2000 and self.have_bought == True and self.counter_for_text < 60:
+            screen.blit(text_success_purchase, (80, -10))
+            self.start_counting = True
+        elif self.counter_for_text == 60:
+            self.start_counting = False
 
-
+        if self.start_counting:
+            self.counter_for_text += 1
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
@@ -843,23 +899,29 @@ def collide(sprite1, sprite2):
                 sound_coin.play()
                 collision.kill()
                 sprite1.add_points()
+
     elif sprite1 == player and sprite2 == hearts:
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
                 collision.kill()
                 sprite1.add_health()
+
     elif sprite1 == player and sprite2 == keys:
         for collision in sprite2:
             if sprite1.rect.colliderect(collision.rect):
                 sound_key.play()
                 collision.kill()
                 sprite1.add_key()
+
     elif sprite1 == player and sprite2 == door1:
         if sprite1.rect.colliderect(sprite2.rect):
             sprite2.check_key()
-    elif sprite1 == player and sprite2 == case1:
-        if sprite1.rect.colliderect(sprite2.rect):
-            sprite2.buy_weapon()
+
+    elif sprite1 == player and sprite2 == strong_boxes:
+        case = pygame.sprite.spritecollide(sprite1, sprite2, False)
+        if case != []:
+            if sprite1.rect.colliderect(case[0].rect):
+                case[0].buy_weapon()
 
     
     elif (sprite1 == bullets or sprite1 == bullets_enemy) and sprite2 == blocks:
@@ -906,6 +968,7 @@ coins = pygame.sprite.Group()
 hearts = pygame.sprite.Group()
 keys = pygame.sprite.Group()
 x_rays_enemy = pygame.sprite.Group()
+strong_boxes = pygame.sprite.Group()
 event_blocks = {}
 path = []
 
@@ -969,6 +1032,7 @@ while done:
                     if game_map[i][j] == 'C':
                         case1 = Block(block_size*j, block_size * i, case)
                         case1.active = True
+                        strong_boxes.add(case1)
                         all_sprites.add(case1)
                     if game_map[i][j] == 'h':
                         heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart)
@@ -990,7 +1054,7 @@ while done:
                 for j in range(len(game_map[i])):
                     if game_map[i][j] == 'e':
                         gun = WeaponPistol()
-                        mob = Mob(block_size * j, block_size * i, enemy1_left, enemy1_right, block_size, gun)
+                        mob = Mob(block_size * j, block_size * i, enemy_stay_left, enemy_stay_right, block_size, gun)
                         mobs.add(mob)
                         all_sprites.add(mob)
                         all_sprites.add(gun)
@@ -1046,9 +1110,9 @@ while done:
         collide(player, blocks)
         collide(player, door1)
         collide(player, coins)
-        collide(player,hearts)
+        collide(player, hearts)
         collide(player, keys)
-        collide(player, case1)
+        collide(player, strong_boxes)
         collide(bullets, blocks)
         collide(mobs, blocks)
         collide(bullets_enemy, blocks)
