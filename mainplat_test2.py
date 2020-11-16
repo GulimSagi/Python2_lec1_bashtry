@@ -22,11 +22,15 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
+COIN = (204,204,0)
 
 pygame.font.init()
 font = pygame.font.SysFont('Comic Sans MS', 40, True, False)
 text_start = font.render("Press space to start", True, RED)
 text_game_over = font.render("Game Over", True, RED)
+text_buy_gun = font.render("-1 points", True, COIN)
+text_no_coin = font.render("You need 1 points to buy", True, RED)
+text_full_gun = font.render("You have already received a weapon", True, RED)
 
 state_start = "welcome"
 state_play = "play"
@@ -85,11 +89,11 @@ shotgun_left = pygame.image.load('shotgun_left.png').convert_alpha()
 shotgun_right = pygame.image.load('shotgun_right.png').convert_alpha()
 machine_gun_right = pygame.image.load('machine_gun_right.png').convert_alpha()
 machine_gun_left = pygame.image.load('machine_gun_left.png').convert_alpha()
-coins_list=[pygame.image.load('coin_1.png').convert_alpha(),
-       pygame.image.load('coin_2.png').convert_alpha(),
-       pygame.image.load('coin_3.png').convert_alpha(),
-       pygame.image.load('coin_4.png').convert_alpha(),
-       pygame.image.load('coin_5.png').convert_alpha()]
+coins_list=[pygame.image.load('coin1.png').convert_alpha(),
+       pygame.image.load('coin2.png').convert_alpha(),
+       pygame.image.load('coin3.png').convert_alpha(),
+       pygame.image.load('coin4.png').convert_alpha(),
+       pygame.image.load('coin5.png').convert_alpha()]
 case = pygame.image.load('case.png').convert_alpha()
 
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
@@ -483,7 +487,7 @@ class WeaponPistol(Weapon):
         self.bullet_speed = 30
         self.damage = 10
         self.automate = False
-        self.reload = 500
+        self.reload = 1000
         self.sound = sound_gun
 
     def prepare_bullets(self):
@@ -562,6 +566,9 @@ class Block(pygame.sprite.Sprite):
         self.rect.y = y
         self.jump = False
         self.shooting = False
+        self.active = False
+        self.have_bought = False
+        self.button_sell_time = 0
 
     def shoot(self):
         bullet = Bullet(self.rect.centerx - block_size, self.rect.centery, WeaponPistol())
@@ -571,14 +578,36 @@ class Block(pygame.sprite.Sprite):
         bullets_enemy.add(bullet)
         bullets.add(bullet)
         all_sprites.add(bullet)
-        
+
     def buy_weapon(self):
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_e]:
-            player.gun.kill()
-            gun = WeaponMachineGun()
-            all_sprites.add(gun)
-            player.add_gun(gun)
+            self.button_sell_time = pygame.time.get_ticks()
+            if self.active:
+                if player.points >= 1:
+                    self.active = False
+                    player.points -= 1
+                    player.gun.kill()
+                    gun = WeaponMachineGun()
+                    all_sprites.add(gun)
+                    player.add_gun(gun)
+                    self.have_bought = True
+                    self.have_money = True
+                    # self.c =False
+                # else:
+                #     self.have_bought = False
+                #     # self.c = False
+
+    def update(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.button_sell_time < 2000 and self.a:
+            screen.blit(text_buy_gun, (80, -10))
+        elif current_time - self.button_sell_time < 2000 and self.b:
+            screen.blit(text_no_coin, (80, -10))
+        elif current_time - self.button_sell_time < 2000 and not self.active:
+            screen.blit(text_full_gun, (80, -10))
+
+
 
 class Door(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
@@ -654,6 +683,7 @@ class Menu:
                 poverhost.blit(font.render(i[2], 1, i[3]), (i[0], i[1] + 60))
 
     def menu(self):
+        global state, state_play
         igra = True
         font_menu = pygame.font.Font("super_mario_bros.otf", 50)
         pygame.key.set_repeat(0,0)
@@ -682,6 +712,7 @@ class Menu:
                             punkt += 1
                 if i.type == pygame.MOUSEBUTTONDOWN and i.button == 1:
                     if punkt == 0:
+                        state = state_play
                         igra = False
                     elif punkt == 1:
                         sys.exit()
@@ -829,6 +860,7 @@ def collide(sprite1, sprite2):
     elif sprite1 == player and sprite2 == case1:
         if sprite1.rect.colliderect(sprite2.rect):
             sprite2.buy_weapon()
+
     
     elif (sprite1 == bullets or sprite1 == bullets_enemy) and sprite2 == blocks:
         hits = pygame.sprite.groupcollide(sprite1, sprite2, True, False)
@@ -885,7 +917,7 @@ punkts =[(450, 250, "Start", (250, 250, 30), (250, 30, 250), 0),
 (480, 350, "Quit", (250, 250, 30), (250, 30, 250), 1)]
 game = Menu(punkts)
 
-game.menu()
+
 done = True
 while done:
     screen.blit(background_image, (0,0))
@@ -936,6 +968,7 @@ while done:
                         all_sprites.add(coin1)
                     if game_map[i][j] == 'C':
                         case1 = Block(block_size*j, block_size * i, case)
+                        case1.active = True
                         all_sprites.add(case1)
                     if game_map[i][j] == 'h':
                         heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart)
@@ -975,13 +1008,7 @@ while done:
             all_sprites.add(player)
             all_sprites.add(gun)
 
-        screen.blit(text_start, (50, 50))
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    done = False
-                if event.key == pygame.K_SPACE:
-                    state = state_play
+        game.menu()
         waiting_command += 1
 
     if state == state_play:
