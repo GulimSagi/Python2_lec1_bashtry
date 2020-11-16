@@ -7,7 +7,7 @@
           ccc ccc      ggg                bbbbbbb
      gggggggggggg                ccc       bbbbbbb  e   cccccc
           ggggg                 ggg       bbbbbbb      gggggg
-          ggggg    cccccc                 bbbdbbbckc            cccccc
+          ggggg g  cccccc                 bbbdbbbckc            cccccc
      ccccccccccccccggggggcccccc      ccct ggggggggggccccc ccccccggggggcccc
 gggg gggggmmmmmggggmmmmmmgggggg      gggg mmmmmmmmmmggggg ggggggmmmmmmgggg    gggggggg
 mmmm mmmmmmmmmmmmmmmmmmmmmmmmmm      mmmm                                                                                                                                                                                                                       ",
