@@ -248,8 +248,6 @@ class Player(pygame.sprite.Sprite):
         score = font.render(f"{self.keys}", True, (218, 165, 32))
         screen.blit(score, (40, 30))
   
-        
-
 class Mob(pygame.sprite.Sprite):
     def __init__(self, x, y, image_left, image_right, size, gun):
         pygame.sprite.Sprite.__init__(self)
@@ -275,11 +273,12 @@ class Mob(pygame.sprite.Sprite):
         self.trigger = False
         self.trigger_general = False
         self.collided_with_block = False
-        self.wait_to_shoot = 10
         self.walk_away = 3
         self.path = []
         self.trigger_old = self.trigger
         self.gun = gun
+        self.current_time = pygame.time.get_ticks()
+        self.time_shoot = self.current_time - self.gun.reload
 
     def update(self):
         global gravity, state, state_game_over
@@ -299,10 +298,10 @@ class Mob(pygame.sprite.Sprite):
         if self.trigger and self.trigger_general:
             projection = player.rect.x - self.rect.x
             self.h_speed = rand_number if bool(projection >= 0) else -rand_number
-            if self.wait_to_shoot == 0:
+            if pygame.time.get_ticks() - self.time_shoot > self.gun.reload:
                 self.shoot()
+                self.time_shoot = pygame.time.get_ticks()
             self.path = []
-        self.wait_to_shoot = (self.wait_to_shoot + 1) % self.gun.reload
 
         if self.trigger == False and self.trigger_old == True:
             self.path.append((player.rect.x, player.rect.y))
@@ -405,10 +404,10 @@ class Boss(Mob):
         if self.trigger and self.trigger_general:
             projection = player.rect.x - self.rect.x
             self.h_speed = rand_number if bool(projection >= 0) else -rand_number
-            if self.wait_to_shoot == 0:
+            if pygame.time.get_ticks() - self.time_shoot >= self.gun.reload:
                 self.shoot()
+                self.time_shoot = pygame.time.get_ticks()
             self.path = []
-        self.wait_to_shoot = (self.wait_to_shoot + 1) % self.gun.reload
 
         if self.trigger == False and self.trigger_old == True:
             self.path.append((player.rect.x, player.rect.y))
@@ -606,8 +605,8 @@ class Coin(pygame.sprite.Sprite):
 
     def update(self):
         global coin_iteration
-        self.image = coins_list[coin_iteration // 6]
-        coin_iteration = (coin_iteration + 1) % (6* len(coins_list)) 
+        self.image = coins_list[coin_iteration // 150]
+        coin_iteration = (coin_iteration + 1) % (150 * len(coins_list)) 
 
 class Heart(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
