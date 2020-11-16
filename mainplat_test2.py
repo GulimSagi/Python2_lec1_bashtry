@@ -14,6 +14,7 @@ current_time = 0
 button_press_time = 0
 turret_reload = 0
 timer_for_shooting = 0
+coin_iteration = 0
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -40,13 +41,13 @@ clock = pygame.time.Clock()
 
 pygame.mixer.music.load('sound/TheFatRat_Epic.mp3')
 pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.set_volume(0.1)
 sound_coin = pygame.mixer.Sound('sound/coin.wav')
 sound_jump = pygame.mixer.Sound('sound/jump_landing.wav')
-sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav'); sound_shotgun.set_volume(0.5)
-sound_machinegun = pygame.mixer.Sound('sound/machine_gun2.wav'); sound_machinegun.set_volume(0.5)
+sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav'); sound_shotgun.set_volume(0.2)
+sound_machinegun = pygame.mixer.Sound('sound/machine_gun2.wav'); sound_machinegun.set_volume(0.2)
 sound_run = pygame.mixer.Sound('sound/run.wav')
-sound_gun = pygame.mixer.Sound('sound/gun.wav'); sound_gun.set_volume(0.5)
+sound_gun = pygame.mixer.Sound('sound/gun.wav'); sound_gun.set_volume(0.2)
 sound_gameover = pygame.mixer.Sound('sound/gameover.wav')
 sound_key = pygame.mixer.Sound('sound/key.wav')
 sound_new_level = pygame.mixer.Sound('sound/new_level.wav')
@@ -84,6 +85,11 @@ shotgun_left = pygame.image.load('shotgun_left.png').convert_alpha()
 shotgun_right = pygame.image.load('shotgun_right.png').convert_alpha()
 machine_gun_right = pygame.image.load('machine_gun_right.png').convert_alpha()
 machine_gun_left = pygame.image.load('machine_gun_left.png').convert_alpha()
+coins_list=[pygame.image.load('coin_1.png').convert_alpha(),
+       pygame.image.load('coin_2.png').convert_alpha(),
+       pygame.image.load('coin_3.png').convert_alpha(),
+       pygame.image.load('coin_4.png').convert_alpha(),
+       pygame.image.load('coin_5.png').convert_alpha()]
 
 hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
 hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
@@ -111,8 +117,9 @@ shotgun_left = pygame.transform.scale(shotgun_left, (block_size, block_size))
 shotgun_right = pygame.transform.scale(shotgun_right, (block_size, block_size))
 machine_gun_left = pygame.transform.scale(machine_gun_left, (block_size, block_size))
 machine_gun_right = pygame.transform.scale(machine_gun_right, (block_size, block_size))
-
-
+for i in range(len(coins_list)):
+    coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
+    
 class Player(pygame.sprite.Sprite):
     def __init__(self, gun):
         pygame.sprite.Sprite.__init__(self)
@@ -584,6 +591,11 @@ class Coin(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+    def update(self):
+        global coin_iteration
+        self.image = coins_list[coin_iteration // 6]
+        coin_iteration = (coin_iteration + 1) % (6* len(coins_list)) 
+
 class Heart(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         pygame.sprite.Sprite.__init__(self)
@@ -903,7 +915,7 @@ while done:
                         all_sprites.add(brick1)
                         all_sprites.add(door1)
                     if game_map[i][j] == 'c':
-                        coin1 = Coin(block_size * j + coin_size//2, block_size * i + coin_size//2, coin)
+                        coin1 = Coin(block_size * j + coin_size//2, block_size * i + coin_size//2, coins_list[0])
                         coins.add(coin1)
                         all_sprites.add(coin1)
                     if game_map[i][j] == 'h':
