@@ -28,10 +28,10 @@ pygame.font.init()
 font = pygame.font.SysFont('Comic Sans MS', 40, True, False)
 text_start = font.render("Press space to start", True, RED)
 text_game_over = font.render("Game Over", True, RED)
-text_buy_gun = font.render("-1 points", True, COIN)
-text_no_coin = font.render("You need 1 points to buy", True, RED)
+text_buy_gun = font.render("You need 1 points to buy a weapon", True, COIN)
+text_no_coin = font.render("You don't have enough money", True, RED)
 text_full_gun = font.render("You have already received a weapon", True, RED)
-text_success_purchase = font.render("You have boughe a weapon!", True, GREEN)
+text_success_purchase = font.render("You have bought a weapon!", True, GREEN)
 
 state_start = "welcome"
 state_play = "play"
@@ -61,96 +61,82 @@ sound_no_bullets = pygame.mixer.Sound('sound/no_bullets.wav')
 sound_reload_fast = pygame.mixer.Sound('sound/reload3.wav')
 sound_reload_slow = pygame.mixer.Sound('sound/reload5.wav')
 
-background_image = pygame.image.load('background1.png').convert_alpha()
-hero_right = pygame.image.load('mario_right.png').convert_alpha()
-hero_left = pygame.image.load('mario_left.png').convert_alpha()
-ground = pygame.image.load('ground.png').convert_alpha()
-mud = pygame.image.load('mud.png').convert_alpha()
-brick = pygame.image.load('brick.png').convert_alpha()
-trampoline = pygame.image.load('trampoline.png').convert_alpha()
-coin = pygame.image.load('coin.png').convert_alpha()
-heart = pygame.image.load('health.png').convert_alpha()
-enemy1_left = pygame.image.load('enemy1_left.png').convert_alpha()
-enemy1_right = pygame.image.load('enemy1_right.png').convert_alpha()
-bullet = pygame.image.load('bullet.png').convert_alpha()
-key = pygame.image.load('key.png').convert_alpha()
-closed_door = pygame.image.load('closed_door.png').convert_alpha()
-opened_door = pygame.image.load('opened_door.png').convert_alpha()
-tree = pygame.image.load('tree.png').convert_alpha()
-cloud = pygame.image.load('cloud.png').convert_alpha()
-transparent_piece = pygame.image.load('transparent_piece.png').convert_alpha()
-health = pygame.image.load('health.png').convert_alpha()
-boss1_left = pygame.image.load('boss1_left.png').convert_alpha()
-boss1_right = pygame.image.load('boss1_right.png').convert_alpha()
-gun_right = pygame.image.load('gun_right.png').convert_alpha()
-gun_left = pygame.image.load('gun_left.png').convert_alpha()
-pistol_left = pygame.image.load('pistol_left.png').convert_alpha()
-pistol_right = pygame.image.load('pistol_right.png').convert_alpha()
-shotgun_left = pygame.image.load('shotgun_left.png').convert_alpha()
-shotgun_right = pygame.image.load('shotgun_right.png').convert_alpha()
-machine_gun_right = pygame.image.load('machine_gun_right.png').convert_alpha()
-machine_gun_left = pygame.image.load('machine_gun_left.png').convert_alpha()
-coins_list=[pygame.image.load('coin1.png').convert_alpha(),
-       pygame.image.load('coin2.png').convert_alpha(),
-       pygame.image.load('coin3.png').convert_alpha(),
-       pygame.image.load('coin4.png').convert_alpha(),
-       pygame.image.load('coin5.png').convert_alpha()]
-case = pygame.image.load('case.png').convert_alpha()
+background_image = pygame.image.load('png/BG/BG.png').convert_alpha()
+player_right = pygame.image.load('png/Characters/player/SnowMan1_right.png').convert_alpha()
+player_left = pygame.image.load('png/Characters/player/SnowMan1_left.png').convert_alpha()
+boss1_left = pygame.image.load('png/Characters/boss/boss1_left.png').convert_alpha()
+boss1_right = pygame.image.load('png/Characters/boss/boss1_right.png').convert_alpha()
+snow_left = pygame.image.load('png/Tiles/1.png').convert_alpha()
+snow_mid = pygame.image.load('png/Tiles/2.png').convert_alpha()
+snow_right = pygame.image.load('png/Tiles/3.png').convert_alpha()
+ground_left = pygame.image.load('png/Tiles/4.png').convert_alpha()
+ground_mid = pygame.image.load('png/Tiles/5.png').convert_alpha()
+ground_right = pygame.image.load('png/Tiles/6.png').convert_alpha()
+brick = pygame.image.load('png/Object/brick.png').convert_alpha()
+case = pygame.image.load('png/Object/case.png').convert_alpha()
+trampoline = pygame.image.load('png/Object/trampoline.png').convert_alpha()
+key = pygame.image.load('png/Object/key.png').convert_alpha()
+health = pygame.image.load('png/Object/health.png').convert_alpha()
+closed_door = pygame.image.load('png/Object/closed_door.png').convert_alpha()
+opened_door = pygame.image.load('png/Object/opened_door.png').convert_alpha()
+tree = pygame.image.load('png/Object/Tree.png').convert_alpha()
+trees = pygame.image.load('png/Object/Trees.png').convert_alpha()
+cloud = pygame.image.load('png/Object/cloud.png').convert_alpha()
+bullet = pygame.image.load('png/Weapon/bullet.png').convert_alpha()
+transparent_piece = pygame.image.load('png/Weapon/transparent_piece.png').convert_alpha()
+pistol_left = pygame.image.load('png/Weapon/pistol_left.png').convert_alpha()
+pistol_right = pygame.image.load('png/Weapon/pistol_right.png').convert_alpha()
+shotgun_left = pygame.image.load('png/Weapon/shotgun_left.png').convert_alpha()
+shotgun_right = pygame.image.load('png/Weapon/shotgun_right.png').convert_alpha()
+machine_gun_right = pygame.image.load('png/Weapon/machine_gun_right.png').convert_alpha()
+machine_gun_left = pygame.image.load('png/Weapon/machine_gun_left.png').convert_alpha()
+coins_list=[pygame.image.load('png/Object/coins/coin1.png').convert_alpha(),
+       pygame.image.load('png/Object/coins/coin2.png').convert_alpha(),
+       pygame.image.load('png/Object/coins/coin3.png').convert_alpha(),
+       pygame.image.load('png/Object/coins/coin4.png').convert_alpha(),
+       pygame.image.load('png/Object/coins/coin5.png').convert_alpha()]
+
 enemy_list_left = []
 enemy_list_right = []
-enemy_stay_left = pygame.image.load('enemy/stay_left.png').convert_alpha()
-enemy_stay_right = pygame.image.load('enemy/stay_right.png').convert_alpha()
-hero_list_left = []
-hero_list_right = []
-hero_stay_left = pygame.image.load('hero/stay_left.png').convert_alpha()
-hero_stay_right = pygame.image.load('hero/stay_right.png').convert_alpha()
-snowman_left = pygame.image.load('SnowMan1_left.png').convert_alpha()
-snowman_right = pygame.image.load('SnowMan1_right.png').convert_alpha()
+enemy_stay_left = pygame.image.load('png/Characters/enemy/stay_left.png').convert_alpha()
+enemy_stay_right = pygame.image.load('png/Characters/enemy/stay_right.png').convert_alpha()
 
 for i in range(10):
-    enemy_list_right.append(pygame.image.load(f'enemy/walk_rigint_{i + 1}.png').convert_alpha())
+    enemy_list_right.append(pygame.image.load(f'png/Characters/enemy/walk_rigint_{i + 1}.png').convert_alpha())
 for i in range(10):
-    enemy_list_left.append(pygame.image.load(f'enemy/walk_left_{i + 1}.png').convert_alpha())
-    
-for i in range(10):
-    hero_list_left.append(pygame.image.load(f'hero/run_left_{i + 1}.png').convert_alpha())
-for i in range(10):
-    hero_list_right.append(pygame.image.load(f'hero/run_{i + 1}.png').convert_alpha())
+    enemy_list_left.append(pygame.image.load(f'png/Characters/enemy/walk_left_{i + 1}.png').convert_alpha())
 
 
-
-hero_right = pygame.transform.scale(hero_right, (block_size, block_size))
-hero_left = pygame.transform.scale(hero_left, (block_size, block_size))
-ground = pygame.transform.scale(ground, (block_size, block_size))
-mud = pygame.transform.scale(mud, (block_size, block_size))
-brick = pygame.transform.scale(brick, (block_size, block_size))
-trampoline = pygame.transform.scale(trampoline, (block_size, block_size//2))
-coin = pygame.transform.scale(coin, (coin_size, coin_size))
-heart = pygame.transform.scale(heart,(coin_size, coin_size))
-gun_right = pygame.transform.scale(gun_right, (gun_size, gun_size))
-gun_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
-enemy1_left = pygame.transform.scale(enemy1_left, (block_size, block_size))
-enemy1_right = pygame.transform.scale(enemy1_right, (block_size, block_size))
-key = pygame.transform.scale(key, (key_size, key_size))
-closed_door = pygame.transform.scale(closed_door, (block_size, block_size))
-opened_door = pygame.transform.scale(opened_door, (block_size, block_size))
-health = pygame.transform.scale(health,(coin_size,coin_size))
-tree = pygame.transform.scale(tree, (block_size*2, block_size*2))
-cloud = pygame.transform.scale(cloud, (block_size*2, block_size))
+player_right = pygame.transform.scale(player_right, (block_size, block_size))
+player_left = pygame.transform.scale(player_left, (block_size, block_size))
 boss1_left = pygame.transform.scale(boss1_left, (block_size*3, block_size*3))
 boss1_right = pygame.transform.scale(boss1_right, (block_size*3, block_size*3))
-pistol_left = pygame.transform.scale(pistol_left, (block_size, block_size))
-pistol_right = pygame.transform.scale(pistol_right, (block_size, block_size))
-shotgun_left = pygame.transform.scale(shotgun_left, (block_size, block_size))
-shotgun_right = pygame.transform.scale(shotgun_right, (block_size, block_size))
-machine_gun_left = pygame.transform.scale(machine_gun_left, (block_size, block_size))
-machine_gun_right = pygame.transform.scale(machine_gun_right, (block_size, block_size))
+snow_left = pygame.transform.scale(snow_left, (block_size, block_size))
+snow_mid = pygame.transform.scale(snow_mid, (block_size, block_size))
+snow_right = pygame.transform.scale(snow_right, (block_size, block_size))
+ground_left = pygame.transform.scale(ground_left, (block_size, block_size))
+ground_mid = pygame.transform.scale(ground_mid, (block_size, block_size))
+ground_right = pygame.transform.scale(ground_right, (block_size, block_size))
+brick = pygame.transform.scale(brick, (block_size, block_size))
+case = pygame.transform.scale(case, (block_size, block_size))
+trampoline = pygame.transform.scale(trampoline, (block_size, block_size//2))
+key = pygame.transform.scale(key, (key_size, key_size))
+health = pygame.transform.scale(health,(coin_size, coin_size))
+closed_door = pygame.transform.scale(closed_door, (block_size, block_size))
+opened_door = pygame.transform.scale(opened_door, (block_size, block_size))
+tree = pygame.transform.scale(tree, (block_size*2, block_size*2))
+trees = pygame.transform.scale(trees, (block_size*2, block_size*2))
+cloud = pygame.transform.scale(cloud, (block_size*2, block_size))
+bullet = pygame.transform.scale(bullet, (block_size//4, block_size//8))
+transparent_piece = pygame.transform.scale(transparent_piece, (block_size//4, block_size//8))
+pistol_left = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
+pistol_right = pygame.transform.scale(pistol_right, (int(gun_size*0.5), int(gun_size*0.5)))
+shotgun_left = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
+shotgun_right = pygame.transform.scale(shotgun_right, (gun_size, gun_size//2))
+machine_gun_left = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
+machine_gun_right = pygame.transform.scale(machine_gun_right, (gun_size, gun_size//2))
 enemy_stay_left = pygame.transform.scale(enemy_stay_left, (block_size, block_size))
 enemy_stay_right = pygame.transform.scale(enemy_stay_right, (block_size, block_size))
-hero_stay_left = pygame.transform.scale(hero_stay_left, (block_size, block_size))
-hero_stay_right = pygame.transform.scale(hero_stay_right, (block_size, block_size))
-snowman_left = pygame.transform.scale(snowman_left, (block_size, block_size))
-snowman_right = pygame.transform.scale(snowman_right, (block_size, block_size))
 
 for i in range(len(coins_list)):
     coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
@@ -158,10 +144,6 @@ case = pygame.transform.scale(case,(block_size,block_size))
 for i in range(len(enemy_list_left)):
     enemy_list_left[i] = pygame.transform.scale(enemy_list_left[i], (block_size, block_size))
     enemy_list_right[i] = pygame.transform.scale(enemy_list_right[i], (block_size, block_size))
-for i in range(len(enemy_list_left)):
-    hero_list_left[i] = pygame.transform.scale(hero_list_left[i], (block_size, block_size))
-    hero_list_right[i] = pygame.transform.scale(hero_list_right[i], (block_size, block_size))
-
 
     
 class Player(pygame.sprite.Sprite):
@@ -175,8 +157,8 @@ class Player(pygame.sprite.Sprite):
         self.health = 100
         self.points = 0
         self.keys = 0
-        self.image_left = snowman_left
-        self.image_right = snowman_right
+        self.image_left = player_left
+        self.image_right = player_right
         self.image = self.image_right
         self.rect = self.image.get_rect()
         self.x = 0
@@ -245,7 +227,7 @@ class Player(pygame.sprite.Sprite):
             button_press_time = pygame.time.get_ticks()
 
             
-        self.hero_png_iteration = (self.hero_png_iteration + 1) % (3 * len(hero_list_right))
+        # self.hero_png_iteration = (self.hero_png_iteration + 1) % (3 * len(hero_list_right))
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -296,15 +278,15 @@ class Player(pygame.sprite.Sprite):
     def add_gun(self,gun):
         self.gun = gun
     def show_points(self):
-        screen.blit(coin, (10, 10))
-        score = font.render(f"{self.points}", True, (255, 204, 0))
-        screen.blit(score, (40, -10))
+        screen.blit(coins_list[1], (10, 10))
+        score = font.render(f"{self.points}", True, COIN)
+        screen.blit(score, (40, -5))
 
     def show_keys(self):
         key_image = pygame.transform.scale(key, (coin_size, coin_size))
         screen.blit(key_image, (10, 50))
         score = font.render(f"{self.keys}", True, (218, 165, 32))
-        screen.blit(score, (40, 30))
+        screen.blit(score, (40, 35))
   
 class Mob(pygame.sprite.Sprite):
     def __init__(self, x, y, image_left, image_right, size, gun):
@@ -316,8 +298,8 @@ class Mob(pygame.sprite.Sprite):
         self.look_left = False
         self.health = 100
         self.points = 0
-        self.image_left = pygame.transform.scale(image_left, (size, size)) 
-        self.image_right = pygame.transform.scale(image_right, (size, size))
+        self.image_left = image_left
+        self.image_right = image_right
         self.image = self.image_left
         self.rect = self.image.get_rect()
         self.x = 0
@@ -452,7 +434,6 @@ class Boss(Mob):
         # self.image_left = image_left
         # self.image_right = image_right
 
-
     def update(self):
         global gravity, state, state_game_over
         rand_number = random.randint(1, 4)
@@ -529,9 +510,9 @@ class Boss(Mob):
 class Weapon(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(gun_right, (gun_size, gun_size))
-        self.image_left = pygame.transform.scale(gun_left, (gun_size, gun_size))
-        self.image_right = pygame.transform.scale(gun_right, (gun_size, gun_size))
+        self.image = pistol_right
+        self.image_left = pistol_left
+        self.image_right = pistol_right
         self.rect = self.image.get_rect()
         self.look_left = False
         self.rect.x = 0
@@ -544,9 +525,9 @@ class Weapon(pygame.sprite.Sprite):
 class WeaponPistol(Weapon):
     def __init__(self):
         super(WeaponPistol, self).__init__()
-        self.image = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
-        self.image_left = pygame.transform.scale(pistol_left, (int(gun_size*0.5), int(gun_size*0.5)))
-        self.image_right = pygame.transform.scale(pistol_right, (int(gun_size*0.5), int(gun_size*0.5)))
+        self.image = pistol_right
+        self.image_left = pistol_left
+        self.image_right = pistol_right
         self.bullet_speed = 30
         self.damage = 10
         self.automate = False
@@ -560,9 +541,9 @@ class WeaponPistol(Weapon):
 class WeaponShotgun(Weapon):
     def __init__(self):
         super(WeaponShotgun, self).__init__()
-        self.image = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
-        self.image_left = pygame.transform.scale(shotgun_left, (gun_size, gun_size//2))
-        self.image_right = pygame.transform.scale(shotgun_right, (gun_size, gun_size//2))
+        self.image = shotgun_right
+        self.image_left = shotgun_left
+        self.image_right = shotgun_right
         self.bullet_speed = 50
         self.damage = 10
         self.automate = False
@@ -582,9 +563,9 @@ class WeaponShotgun(Weapon):
 class WeaponMachineGun(Weapon):
     def __init__(self):
         super(WeaponMachineGun, self).__init__()
-        self.image = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
-        self.image_left = pygame.transform.scale(machine_gun_left, (gun_size, gun_size//2))
-        self.image_right = pygame.transform.scale(machine_gun_right, (gun_size, gun_size//2))
+        self.image = machine_gun_right
+        self.image_left = machine_gun_left
+        self.image_right = machine_gun_right
         self.bullet_speed = 60
         self.reload = 1500
         self.damage = 10
@@ -605,7 +586,7 @@ class WeaponMachineGun(Weapon):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, gun):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(bullet, (block_size//4, block_size//8))
+        self.image = bullet
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y - gun_size // 4
@@ -725,7 +706,7 @@ class Key(pygame.sprite.Sprite):
 class X_ray(pygame.sprite.Sprite):
     def __init__(self, x, y, mob):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(transparent_piece, (block_size//4, block_size//8))
+        self.image = transparent_piece
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -1012,13 +993,13 @@ while done:
             for i in range(len(game_map)):
                 for j in range(len(game_map[i])):
                     if game_map[i][j] == 'g':
-                        ground1 = Block(block_size * j, block_size * i, ground)
-                        blocks.add(ground1)
-                        all_sprites.add(ground1)
+                        snow_mid1 = Block(block_size * j, block_size * i, snow_mid)
+                        blocks.add(snow_mid1)
+                        all_sprites.add(snow_mid1)
                     if game_map[i][j] == 'm':
-                        mud1 = Block(block_size * j, block_size * i, mud)
-                        blocks.add(mud1)
-                        all_sprites.add(mud1)
+                        ground_mid1 = Block(block_size * j, block_size * i, ground_mid)
+                        blocks.add(ground_mid1)
+                        all_sprites.add(ground_mid1)
                     if game_map[i][j] == 'b':
                         brick1 = Block(block_size * j, block_size * i, brick)
                         all_sprites.add(brick1)
@@ -1048,7 +1029,7 @@ while done:
                         strong_boxes.add(case1)
                         all_sprites.add(case1)
                     if game_map[i][j] == 'h':
-                        heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart)
+                        heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, health)
                         hearts.add(heart1)
                         all_sprites.add(heart1)
                     if game_map[i][j] == 'k':
@@ -1078,7 +1059,6 @@ while done:
                         # mobs.add(boss1)
                         # all_sprites.add(boss1)
                         # all_sprites.add(gun)
-
 
             gun = WeaponPistol()
             player = Player(gun)
@@ -1151,7 +1131,7 @@ while done:
         player.show_points()
         player.show_keys()
         draw_shield_bar(120, 20, WIDTH-130, 10, player.health, GREEN)
-        screen.blit(health, (WIDTH-160, 10))
+        screen.blit(health, (WIDTH-165, 5))
         for m in mobs:
             draw_shield_bar(60, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, RED)
 
