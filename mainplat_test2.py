@@ -66,8 +66,10 @@ sound_reload_slow = pygame.mixer.Sound('sound/reload5.wav')
 background_image = pygame.image.load('png/BG/BG.png').convert_alpha()
 player_right = pygame.image.load('png/Characters/player/SnowMan1_right.png').convert_alpha()
 player_left = pygame.image.load('png/Characters/player/SnowMan1_left.png').convert_alpha()
-boss1_left = pygame.image.load('png/Characters/boss/boss1_left.png').convert_alpha()
-boss1_right = pygame.image.load('png/Characters/boss/boss1_right.png').convert_alpha()
+boss1_left = pygame.image.load('png/Characters/boss/boss1_snowman_left.png').convert_alpha()
+boss1_right = pygame.image.load('png/Characters/boss/boss1_snowman_right.png').convert_alpha()
+boss2_left = pygame.image.load('png/Characters/boss/boss2_snowman_left.png').convert_alpha()
+boss2_right = pygame.image.load('png/Characters/boss/boss2_snowman_right.png').convert_alpha()
 snow_left = pygame.image.load('png/Tiles/1.png').convert_alpha()
 snow_mid = pygame.image.load('png/Tiles/2.png').convert_alpha()
 snow_right = pygame.image.load('png/Tiles/3.png').convert_alpha()
@@ -119,8 +121,10 @@ for i in range(10):
 
 player_right = pygame.transform.scale(player_right, (block_size, block_size))
 player_left = pygame.transform.scale(player_left, (block_size, block_size))
-boss1_left = pygame.transform.scale(boss1_left, (block_size*3, block_size*3))
-boss1_right = pygame.transform.scale(boss1_right, (block_size*3, block_size*3))
+boss1_left = pygame.transform.scale(boss1_left, (block_size * 2, block_size * 2))
+boss1_right = pygame.transform.scale(boss1_right, (block_size * 2, block_size * 2))
+boss2_left = pygame.transform.scale(boss2_left, (block_size * 2, block_size * 2))
+boss2_right = pygame.transform.scale(boss2_right, (block_size * 2, block_size * 2))
 snow_left = pygame.transform.scale(snow_left, (block_size, block_size))
 snow_mid = pygame.transform.scale(snow_mid, (block_size, block_size))
 snow_right = pygame.transform.scale(snow_right, (block_size, block_size))
@@ -180,9 +184,18 @@ class Player(pygame.sprite.Sprite):
         self.camera_y = 0
         self.gun = gun
         self.hero_png_iteration = 0
+        self.all_health = 100
+        self.got_new_gun = False
+        # self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size, gun_size - 20))
+        # self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size, gun_size - 20))
 
     def update(self):
         global gravity, state, state_game_over, camera_x, camera_y, stable_x, stable_y, button_press_time
+
+        # if self.got_new_gun:
+            # self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size, gun_size - 20))
+            # self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size, gun_size - 20))
+            # self.got_new_gun = False
 
         self.rotate_gun()
         if self.rect.x + camera_x > WIDTH * 0.65:
@@ -204,12 +217,16 @@ class Player(pygame.sprite.Sprite):
             self.image = self.image_right
             self.gun.look_left = False
             self.look_left = False
+            # self.gun.rect.centerx = self.rect.centerx
+            # self.gun.rect.centery = self.rect.centery - 5
         # elif mouse_x < self.rect.centerx:
         else:
             # self.image = hero_list_left[self.hero_png_iteration // 3]
             self.image = self.image_left
             self.gun.look_left = True
             self.look_left = True
+            # self.gun.rect.centerx = self.rect.centerx - 20
+            # self.gun.rect.centery = self.rect.centery - 5
         # elif mouse_x < self.rect.centerx + camera_x and self.h_speed == 0 and self.look_left:
             # self.image = self.image_left
             # self.gun.look_left = True
@@ -241,13 +258,20 @@ class Player(pygame.sprite.Sprite):
 
             
         # self.hero_png_iteration = (self.hero_png_iteration + 1) % (3 * len(hero_list_right))
-
         self.x = self.rect.x
         self.y = self.rect.y
         self.rect.x += self.h_speed
         self.rect.y += self.v_speed
-        self.gun.rect.centerx = self.rect.centerx 
-        self.gun.rect.centery = self.rect.centery
+        if not self.look_left:
+            self.gun.rect.centerx = self.rect.centerx - 10
+            self.gun.rect.centery = self.rect.centery - 5
+        else:
+            self.gun.rect.centerx = self.rect.centerx - 20
+            self.gun.rect.centery = self.rect.centery - 5
+
+
+        # self.gun.rect.centerx = self.rect.centerx 
+        # self.gun.rect.centery = self.rect.centery
 
 
     def shoot(self):
@@ -275,9 +299,9 @@ class Player(pygame.sprite.Sprite):
         rel_x, rel_y = mouse_x - self.gun.rect.centerx, mouse_y - self.gun.rect.centery
         angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
         if self.gun.look_left:
-            self.gun.image = pygame.transform.rotate(pygame.transform.scale(self.gun.image_left, (block_size, block_size)), int(angle - 180))
+            self.gun.image = pygame.transform.rotate(self.gun.image_left, int(angle - 180))
         else:
-            self.gun.image = pygame.transform.rotate(pygame.transform.scale(self.gun.image_right, (block_size, block_size)), int(angle))
+            self.gun.image = pygame.transform.rotate(self.gun.image_right, int(angle))
 
     def add_points(self):
         self.points += 1
@@ -309,7 +333,8 @@ class Mob(pygame.sprite.Sprite):
         self.jump_height = 22
         self.jump_is_allowed = False
         self.look_left = False
-        self.health = 100
+        self.all_health = 100
+        self.health = self.all_health
         self.points = 0
         self.image_left = image_left
         self.image_right = image_right
@@ -388,21 +413,29 @@ class Mob(pygame.sprite.Sprite):
             self.jump_is_allowed = False
 
         if self.h_speed > 0:
-            self.gun.rect.centerx = self.rect.centerx + gun_size // 2
-            self.gun.rect.centery = self.rect.centery + gun_size // 4
+            self.gun.rect.centerx = self.rect.centerx + 14
+            self.gun.rect.centery = self.rect.centery + gun_size // 8
             self.image = enemy_list_right[self.enemy_png_iteration // 3]
             self.gun.image = self.gun.image_right
             self.gun.look_left = False
         elif self.h_speed < 0:
-            self.gun.rect.centerx = self.rect.centerx + gun_size // 2
-            self.gun.rect.centery = self.rect.centery + gun_size // 4
+            self.gun.rect.centerx = self.rect.centerx - 14
+            self.gun.rect.centery = self.rect.centery + gun_size // 8
             self.image = enemy_list_left[self.enemy_png_iteration // 3]
             self.gun.image = self.gun.image_left
             self.gun.look_left = True
         elif self.look_left and self.h_speed == 0:
             self.image = enemy_stay_left
+            self.gun.rect.centerx = self.rect.centerx - 14
+            self.gun.rect.centery = self.rect.centery + gun_size // 8
+            self.gun.image = self.gun.image_left
+            self.gun.look_left = True
         elif self.look_left == False and self.h_speed == 0:
             self.image = enemy_stay_right
+            self.gun.rect.centerx = self.rect.centerx + 14
+            self.gun.rect.centery = self.rect.centery + gun_size // 8
+            self.gun.image = self.gun.image_right
+            self.gun.look_left = False
         
         self.enemy_png_iteration = (self.enemy_png_iteration + 1) % (3 * len(enemy_list_left))
 
@@ -440,10 +473,14 @@ class Mob(pygame.sprite.Sprite):
             x_rays_enemy.add(ray)
 
 class Boss(Mob):
-    def __init__(self, x, y, image_left, image_right, size, gun):
+    def __init__(self, x, y, image_left, image_right, size, gun, large_coef):
         super(Boss, self).__init__(x, y, image_left, image_right, size, gun)
-        self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size*2, gun_size*2)) 
-        self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size*2, gun_size*2))
+        self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size, gun_size)) 
+        self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size, gun_size))
+        self.all_health = 500        
+        self.health = self.all_health
+        self.large_coef = large_coef
+        self.holding_key = False
         # self.image_left = image_left
         # self.image_right = image_right
 
@@ -501,17 +538,28 @@ class Boss(Mob):
             self.jump_is_allowed = False
 
         if self.h_speed > 0:
-            self.gun.rect.centerx = self.rect.centerx - gun_size // 4
-            self.gun.rect.centery = self.rect.centery + gun_size // 4
+            self.gun.rect.centerx = self.rect.centerx + 25
+            self.gun.rect.centery = self.rect.centery
             self.image = self.image_right
             self.gun.image = self.gun.image_right
             self.gun.look_left = False
-        else:
-            self.gun.rect.centerx = self.rect.centerx - gun_size // 4
-            self.gun.rect.centery = self.rect.centery + gun_size // 4
+        elif self.h_speed < 0:
+            self.gun.rect.centerx = self.rect.centerx - 45
+            self.gun.rect.centery = self.rect.centery
             self.image = self.image_left
             self.gun.image = self.gun.image_left
             self.gun.look_left = True
+        elif self.h_speed and not self.look_left:
+            self.gun.rect.centerx = self.rect.centerx + 25
+            self.gun.rect.centery = self.rect.centery
+            self.gun.image = self.gun.image_left
+            self.gun.look_left = True
+        elif self.h_speed == 0 and self.look_left:
+            self.gun.rect.centerx = self.rect.centerx - 45
+            self.gun.rect.centery = self.rect.centery
+            self.gun.image = self.gun.image_left
+            self.gun.look_left = True
+
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -577,8 +625,8 @@ class WeaponMachineGun(Weapon):
     def __init__(self):
         super(WeaponMachineGun, self).__init__()
         self.image = machine_gun_right
-        self.image_left = machine_gun_left
-        self.image_right = machine_gun_right
+        self.image_left = pygame.transform.scale(machine_gun_left, (gun_size + 10, gun_size - 10))
+        self.image_right = pygame.transform.scale(machine_gun_right, (gun_size + 10, gun_size - 10))
         self.bullet_speed = 60
         self.reload = 1500
         self.damage = 10
@@ -602,7 +650,7 @@ class Bullet(pygame.sprite.Sprite):
         self.image = bullet
         self.rect = self.image.get_rect()
         self.rect.x = x
-        self.rect.y = y - gun_size // 4
+        self.rect.y = y
         self.v_speed = -10
         self.h_speed = 10
         self.gun = gun
@@ -652,6 +700,7 @@ class Block(pygame.sprite.Sprite):
                     gun = WeaponMachineGun()
                     all_sprites.add(gun)
                     player.add_gun(gun)
+                    player.got_new_gun = True
                     self.have_bought = True
         else:
             self.have_money = False
@@ -718,10 +767,22 @@ class Key(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.gravity = 2
+        self.v_speed = -30
+        self.x = x
+        self.y = y
+
     def update(self):
         global key_iteration
-        self.image = key_list[key_iteration // 60]
         key_iteration = (key_iteration + 1) % (60 * len(key_list))
+        self.image = key_list[key_iteration // 60]
+        self.v_speed += self.gravity
+        if self.v_speed >= 24:
+            self.v_speed = 24
+        self.rect.y += self.v_speed
+        if self.rect.y >= self.y:
+            self.rect.y = self.y
+
 
 class X_ray(pygame.sprite.Sprite):
     def __init__(self, x, y, mob):
@@ -797,12 +858,12 @@ def load_game_map():
         for line in f:
             game_map.append(line)
 
-def draw_shield_bar(length, height, x, y, health, color):
+def draw_shield_bar(length, height, x, y, health, all_health, color):
     if health < 0:
         health = 0
     BAR_LENGTH = length
     BAR_HEIGHT = height
-    fill = (health / 100) * BAR_LENGTH
+    fill = (health / all_health) * BAR_LENGTH
     outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
     fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
     pygame.draw.rect(screen, color, fill_rect)
@@ -867,7 +928,14 @@ def collide(sprite1, sprite2):
 
     if sprite1 == mobs and sprite2 == blocks:
         for mob in sprite1:
-            size = block_size * 3 if mob == boss1 else block_size
+            # size = block_size * 2 if mob == boss1 else block_size
+            if mob == boss1:
+                size = block_size * boss1.large_coef
+            elif mob == boss2:
+                size = block_size * boss2.large_coef
+            else:
+                size = block_size
+
             collisions = pygame.sprite.spritecollide(mob, sprite2, False)
             if collisions == []:
                 mob.jump_is_allowed = False
@@ -950,10 +1018,17 @@ def collide(sprite1, sprite2):
             hit.kill()
 
     elif sprite1 == mobs and sprite2 == bullets:
+        global event_blocks
         hits = pygame.sprite.groupcollide(sprite1, sprite2, False, True)
         for m in hits.keys():
             m.health -= len(hits[m]) * (hits[m][0].gun.damage)
             if m.health <= 0:
+                if m == boss1 and m.holding_key == False:
+                    boss2.holding_key = True
+                elif m == boss2 and m.holding_key == False:
+                    boss1.holding_key = True
+                elif (m == boss1 or m == boss2) and m.holding_key == True:
+                    event_blocks['key_have_been_fallen'] = [m.rect.centerx, m.rect.centery, True]
                 m.kill()
                 m.gun.kill()
 
@@ -1052,10 +1127,10 @@ while done:
                         heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart_list[0])
                         hearts.add(heart1)
                         all_sprites.add(heart1)
-                    if game_map[i][j] == 'k':
-                        key1 = Key(block_size * j + 10, block_size * i + 10, key_list[0])
-                        keys.add(key1)
-                        all_sprites.add(key1)
+                    # if game_map[i][j] == 'k':
+                    #     key1 = Key(block_size * j + 10, block_size * i + 10, key_list[0])
+                    #     keys.add(key1)
+                    #     all_sprites.add(key1)
                     if game_map[i][j] == 't':
                         tramp1 = Block(block_size * j, block_size * i + block_size//2, trampoline)
                         tramp1.jump = True
@@ -1075,12 +1150,19 @@ while done:
 
                     if game_map[i][j] == 'B':
                         gun = WeaponShotgun()
-                        boss1 = Boss(block_size * j, block_size * i, boss1_left, boss1_right, block_size*3, gun)
+                        boss1 = Boss(block_size * j, block_size * i, boss1_left, boss1_right, block_size, gun, 2)
                         # mobs.add(boss1)
                         # all_sprites.add(boss1)
                         # all_sprites.add(gun)
 
-            gun = WeaponPistol()
+                    if game_map[i][j] == 'P':
+                        gun = WeaponShotgun()
+                        boss2 = Boss(block_size * j, block_size * i, boss2_left, boss2_right, block_size, gun, 2)
+                        # mobs.add(boss2)
+                        # all_sprites.add(boss2)
+                        # all_sprites.add(gun)
+
+            gun = WeaponShotgun()
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
@@ -1141,19 +1223,33 @@ while done:
         for key_i in event_blocks.keys():
             if key_i == 'boss' and player.rect.x > event_blocks[key_i][0] and event_blocks[key_i][1] == False:
                 mobs.add(boss1)
+                mobs.add(boss2)
                 all_sprites.add(boss1)
+                all_sprites.add(boss2)
                 all_sprites.add(boss1.gun)
+                all_sprites.add(boss2.gun)
                 event_blocks[key_i][1] = True
+
+            if key_i == 'key_have_been_fallen' and event_blocks[key_i][2]:
+                key1 = Key(event_blocks[key_i][0], event_blocks[key_i][1], key_list[0])
+                keys.add(key1)
+                all_sprites.add(key1)
+                event_blocks[key_i][2] = False 
 
         for fanta in all_sprites:
             screen.blit(fanta.image, (fanta.rect.x + camera_x, fanta.rect.y + int(camera_y * 0.3)))
 
         player.show_points()
         player.show_keys()
-        draw_shield_bar(120, 20, WIDTH-130, 10, player.health, GREEN)
+        draw_shield_bar(120, 20, WIDTH-130, 10, player.health, player.all_health, GREEN)
         screen.blit(health, (WIDTH-165, 5))
         for m in mobs:
-            draw_shield_bar(60, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, RED)
+            if m == boss1:
+                draw_shield_bar(90, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, m.all_health, RED)
+            elif m == boss2:
+                draw_shield_bar(90, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, m.all_health, RED)
+            else:
+                draw_shield_bar(60, 8, m.rect.x + camera_x, m.rect.y + int(camera_y * 0.3)-15, m.health, m.all_health, RED)
 
         if player.health <= 0:
             sound_gameover.play()
