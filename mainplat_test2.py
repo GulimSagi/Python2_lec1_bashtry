@@ -104,6 +104,8 @@ hero_list_left = []
 hero_list_right = []
 hero_stay_left = pygame.image.load('hero/stay_left.png').convert_alpha()
 hero_stay_right = pygame.image.load('hero/stay_right.png').convert_alpha()
+snowman_left = pygame.image.load('SnowMan1_left.png').convert_alpha()
+snowman_right = pygame.image.load('SnowMan1_right.png').convert_alpha()
 
 for i in range(10):
     enemy_list_right.append(pygame.image.load(f'enemy/walk_rigint_{i + 1}.png').convert_alpha())
@@ -147,6 +149,8 @@ enemy_stay_left = pygame.transform.scale(enemy_stay_left, (block_size, block_siz
 enemy_stay_right = pygame.transform.scale(enemy_stay_right, (block_size, block_size))
 hero_stay_left = pygame.transform.scale(hero_stay_left, (block_size, block_size))
 hero_stay_right = pygame.transform.scale(hero_stay_right, (block_size, block_size))
+snowman_left = pygame.transform.scale(snowman_left, (block_size, block_size))
+snowman_right = pygame.transform.scale(snowman_right, (block_size, block_size))
 
 for i in range(len(coins_list)):
     coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
@@ -171,8 +175,8 @@ class Player(pygame.sprite.Sprite):
         self.health = 100
         self.points = 0
         self.keys = 0
-        self.image_left = hero_stay_left
-        self.image_right = hero_stay_right
+        self.image_left = snowman_left
+        self.image_right = snowman_right
         self.image = self.image_right
         self.rect = self.image.get_rect()
         self.x = 0
@@ -198,18 +202,27 @@ class Player(pygame.sprite.Sprite):
             state = state_game_over
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        if mouse_x > self.rect.centerx + camera_x and self.h_speed != 0:
-            self.image = hero_list_right[self.hero_png_iteration // 3]
+        mouse_x -= camera_x
+        mouse_y -= int(camera_y * 0.3)
+        if mouse_x > self.rect.centerx:
+            # self.image = hero_list_right[self.hero_png_iteration // 3]
+            self.image = self.image_right
             self.gun.look_left = False
             self.look_left = False
-        elif mouse_x < self.rect.centerx + camera_x and self.h_speed != 0:
-            self.image = hero_list_left[self.hero_png_iteration // 3]
+        # elif mouse_x < self.rect.centerx:
+        else:
+            # self.image = hero_list_left[self.hero_png_iteration // 3]
+            self.image = self.image_left
             self.gun.look_left = True
             self.look_left = True
-        elif self.h_speed == 0 and self.look_left:
-            self.image = self.image_left
-        elif self.h_speed == 0 and not self.look_left:
-            self.image = self.image_right
+        # elif mouse_x < self.rect.centerx + camera_x and self.h_speed == 0 and self.look_left:
+            # self.image = self.image_left
+            # self.gun.look_left = True
+            # self.look_left = True
+        # elif mouse_x > self.rect.centerx + camera_x and self.h_speed == 0 and not self.look_left:
+            # self.image = self.image_right
+            # self.gun.look_left = False
+            # self.look_left = False
         
 
         self.h_speed = 0
