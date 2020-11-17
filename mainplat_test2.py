@@ -15,6 +15,7 @@ button_press_time = 0
 turret_reload = 0
 timer_for_shooting = 0
 coin_iteration = 0
+heart_iteration = 0
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -100,6 +101,10 @@ enemy_list_left = []
 enemy_list_right = []
 enemy_stay_left = pygame.image.load('png/Characters/enemy/stay_left.png').convert_alpha()
 enemy_stay_right = pygame.image.load('png/Characters/enemy/stay_right.png').convert_alpha()
+heart_list = [pygame.image.load('png/Object/heart_1.png').convert_alpha(),
+              pygame.image.load('png/Object/heart_2.png').convert_alpha(),
+              pygame.image.load('png/Object/heart_3.png').convert_alpha(),
+              pygame.image.load('png/Object/heart_4.png').convert_alpha()]
 
 for i in range(10):
     enemy_list_right.append(pygame.image.load(f'png/Characters/enemy/walk_rigint_{i + 1}.png').convert_alpha())
@@ -144,7 +149,8 @@ case = pygame.transform.scale(case,(block_size,block_size))
 for i in range(len(enemy_list_left)):
     enemy_list_left[i] = pygame.transform.scale(enemy_list_left[i], (block_size, block_size))
     enemy_list_right[i] = pygame.transform.scale(enemy_list_right[i], (block_size, block_size))
-
+for i in range(len(heart_list)):
+    heart_list[i]=pygame.transform.scale(heart_list[i], (coin_size, coin_size))
     
 class Player(pygame.sprite.Sprite):
     def __init__(self, gun):
@@ -694,7 +700,10 @@ class Heart(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-
+    def update(self):
+        global heart_iteration
+        self.image = heart_list[heart_iteration // 150]
+        heart_iteration = (heart_iteration + 1) % (150 * len(heart_list)) 
 class Key(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         pygame.sprite.Sprite.__init__(self)
@@ -1029,7 +1038,7 @@ while done:
                         strong_boxes.add(case1)
                         all_sprites.add(case1)
                     if game_map[i][j] == 'h':
-                        heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, health)
+                        heart1 = Heart(block_size * j + coin_size//2, block_size * i + coin_size//2, heart_list[0])
                         hearts.add(heart1)
                         all_sprites.add(heart1)
                     if game_map[i][j] == 'k':
