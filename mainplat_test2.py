@@ -16,6 +16,7 @@ turret_reload = 0
 timer_for_shooting = 0
 coin_iteration = 0
 heart_iteration = 0
+key_iteration = 0
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -105,6 +106,10 @@ heart_list = [pygame.image.load('png/Object/heart_1.png').convert_alpha(),
               pygame.image.load('png/Object/heart_2.png').convert_alpha(),
               pygame.image.load('png/Object/heart_3.png').convert_alpha(),
               pygame.image.load('png/Object/heart_4.png').convert_alpha()]
+key_list = [pygame.image.load('png/Object/key_1.png').convert_alpha(),
+            pygame.image.load('png/Object/key_2.png').convert_alpha(),
+            pygame.image.load('png/Object/key_3.png').convert_alpha(),
+            pygame.image.load('png/Object/key_3.png').convert_alpha()]
 
 for i in range(10):
     enemy_list_right.append(pygame.image.load(f'png/Characters/enemy/walk_rigint_{i + 1}.png').convert_alpha())
@@ -151,6 +156,8 @@ for i in range(len(enemy_list_left)):
     enemy_list_right[i] = pygame.transform.scale(enemy_list_right[i], (block_size, block_size))
 for i in range(len(heart_list)):
     heart_list[i]=pygame.transform.scale(heart_list[i], (coin_size, coin_size))
+for i in range(len(key_list)):
+    key_list[i]=pygame.transform.scale(key_list[i], (key_size, key_size))    
     
 class Player(pygame.sprite.Sprite):
     def __init__(self, gun):
@@ -711,6 +718,10 @@ class Key(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+    def update(self):
+        global key_iteration
+        self.image = key_list[key_iteration // 60]
+        key_iteration = (key_iteration + 1) % (60 * len(key_list))
 
 class X_ray(pygame.sprite.Sprite):
     def __init__(self, x, y, mob):
@@ -1042,7 +1053,7 @@ while done:
                         hearts.add(heart1)
                         all_sprites.add(heart1)
                     if game_map[i][j] == 'k':
-                        key1 = Key(block_size * j + 10, block_size * i + 10, key)
+                        key1 = Key(block_size * j + 10, block_size * i + 10, key_list[0])
                         keys.add(key1)
                         all_sprites.add(key1)
                     if game_map[i][j] == 't':
