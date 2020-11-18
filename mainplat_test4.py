@@ -968,9 +968,8 @@ class Menu:
         pygame.key.set_repeat(0,0)
         pygame.mouse.set_visible(True)
         punkt = 0
-        background_rules = pygame.image.load("png/BG/BG_Rules.png")
+        background_rules = pygame.image.load("png/BG/BG_Rules2.png")
         while igra:
-            window.fill((0, 100, 0))
             window.blit(background_image, (0, 0))
             screen.blit(window, (0, 0))
             mp = pygame.mouse.get_pos()   # learn
