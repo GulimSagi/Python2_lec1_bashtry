@@ -3,7 +3,7 @@ import math
 import random
 import sys
 
-WIDTH = 1080
+WIDTH = 1366
 HEIGHT = 768
 block_size = 60
 coin_size = block_size//2
@@ -17,6 +17,11 @@ timer_for_shooting = 0
 coin_iteration = 0
 heart_iteration = 0
 key_iteration = 0
+santa_got_free = 0
+start_music_play = True
+play_music_play = False
+end_music_play = False
+boss_music_play = False
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -24,44 +29,71 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
-COIN = (204,204,0)
+COIN = (204, 204 ,0)
 
 pygame.font.init()
 font = pygame.font.SysFont('Comic Sans MS', 40, True, False)
+font2 = pygame.font.SysFont('Comic Sans MS', 26, True, False)
+font3 = pygame.font.SysFont('Comic Sans MS', 20, True, False)
+font4 = pygame.font.SysFont('Comic Sans MS', 150, True, False)
 text_start = font.render("Press space to start", True, RED)
 text_game_over = font.render("Game Over", True, RED)
 text_buy_gun = font.render("You need 1 points to buy a weapon", True, COIN)
 text_no_coin = font.render("You don't have enough money", True, RED)
 text_full_gun = font.render("You have already received a weapon", True, RED)
 text_success_purchase = font.render("You have bought a weapon!", True, GREEN)
+text_thanks_1 = font2.render("Ohh, snowman, how can I prove my gratitude!", True, BLACK)
+text_thanks_2 = font2.render("You, didn't only rescue me, but saved the whole", True, BLACK)
+text_thanks_3 = font2.render("holiday on the whole Earth! Thank you!", True, BLACK)
+text_the_end = font4.render('THE END', True, GREEN)
+text_authors = [
+    font3.render('Beisov Anuar', True, BLACK),
+    font3.render('Erzhanuly Asyl', True, BLACK),
+    font3.render('Sagymbayeva Gulim', True, BLACK),
+    font3.render('Dubinin Evgenii', True, BLACK),
+    font3.render('Abdigaliev Ernar', True, BLACK),
+    font3.render('Adilzhan Alibek', True, BLACK),
+]
+text_authors7 = font3.render('Special thanks to prof. Timur Bakibayev (for sleepless nights in front of the laptop)', True, YELLOW)   
+# text_authors8 = font3.render('(for sleepless nights and coffee)', True, YELLOW)   
+text_esc = font3.render('press ESC to quit', True, BLUE)
+g = font4.render('G', True, RED)
+t = font4.render('T', True, GREEN)
 
 state_start = "welcome"
 state_play = "play"
 state_game_over = "game over"
+state_game_win = "game_win"
 
 pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.mixer.init()
 pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 window = pygame.Surface((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-pygame.mixer.music.load('sound/TheFatRat_Epic.mp3')
-pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.1)
-sound_coin = pygame.mixer.Sound('sound/coin.wav')
-sound_jump = pygame.mixer.Sound('sound/jump_landing.wav')
+# pygame.mixer.music.load('sound/TheFatRat_Epic.mp3')
+# pygame.mixer.music.play(-1)
+# pygame.mixer.music.set_volume(0.1)
+sound_coin = pygame.mixer.Sound('sound/coin.wav'); sound_coin.set_volume(0.1)
+sound_jump = pygame.mixer.Sound('sound/jump_up.wav'); sound_jump.set_volume(0.2)
 sound_shotgun = pygame.mixer.Sound('sound/shotgun.wav'); sound_shotgun.set_volume(0.2)
 sound_machinegun = pygame.mixer.Sound('sound/machine_gun2.wav'); sound_machinegun.set_volume(0.2)
-sound_run = pygame.mixer.Sound('sound/run.wav')
-sound_gun = pygame.mixer.Sound('sound/gun.wav'); sound_gun.set_volume(0.2)
-sound_gameover = pygame.mixer.Sound('sound/gameover.wav')
-sound_key = pygame.mixer.Sound('sound/key.wav')
+# sound_run = pygame.mixer.Sound('sound/run.wav')
+sound_run = pygame.mixer.Sound('sound/leg.wav'); sound_run.set_volume(0.2)
+sound_gun = pygame.mixer.Sound('sound/gun.wav'); sound_gun.set_volume(0.08)
+sound_gameover = pygame.mixer.Sound('sound/game_over2.wav')
+sound_key = pygame.mixer.Sound('sound/key.wav'); sound_key.set_volume(0.3)
 sound_new_level = pygame.mixer.Sound('sound/new_level.wav')
 sound_trampoline = pygame.mixer.Sound('sound/trampoline.wav')
 sound_no_bullets = pygame.mixer.Sound('sound/no_bullets.wav')
 sound_reload_fast = pygame.mixer.Sound('sound/reload3.wav')
 sound_reload_slow = pygame.mixer.Sound('sound/reload5.wav')
+sound_jump_landing = pygame.mixer.Sound('sound/jump_landing2.wav')
+sound_santa = pygame.mixer.Sound('sound/santa_voice.wav')
+# sound_menu = pygame.mixer.Sound('sound/sound_menu.wav')
+# sound_jingle_bells = pygame.mixer.Sound('sound/Jingle_Bells.wav')
+# sound_awesomeness = pygame.mixer.Sound('sound/awesomeness.wav')
 
 background_image = pygame.image.load('png/BG/BG.png').convert_alpha()
 player_right = pygame.image.load('png/Characters/player/SnowMan1_right.png').convert_alpha()
@@ -112,6 +144,8 @@ machine_gun_right = pygame.image.load('png/Weapon/machine_gun_right.png').conver
 machine_gun_left = pygame.image.load('png/Weapon/machine_gun_left.png').convert_alpha()
 santa_stay_left = pygame.image.load('png/Characters/santa/stay_left.png').convert_alpha()
 santa_stay_right = pygame.image.load('png/Characters/santa/stay_right.png').convert_alpha()
+santa_head = pygame.image.load('png/Characters/santa/santa_head.png').convert_alpha()
+logo = pygame.image.load('png/BG/logo.png').convert_alpha()
 coins_list=[pygame.image.load('png/Object/coins/coin1.png').convert_alpha(),
        pygame.image.load('png/Object/coins/coin2.png').convert_alpha(),
        pygame.image.load('png/Object/coins/coin3.png').convert_alpha(),
@@ -193,6 +227,8 @@ enemy_stay_left = pygame.transform.scale(enemy_stay_left, (block_size, block_siz
 enemy_stay_right = pygame.transform.scale(enemy_stay_right, (block_size, block_size))
 santa_stay_left = pygame.transform.scale(santa_stay_left, (block_size, block_size))
 santa_stay_right = pygame.transform.scale(santa_stay_right, (block_size, block_size))
+santa_head = pygame.transform.scale(santa_head, (4 * block_size, 4 * block_size))
+logo = pygame.transform.scale(logo, (6 * block_size, 6 * block_size))
 
 for i in range(len(coins_list)):
     coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
@@ -215,7 +251,8 @@ class Player(pygame.sprite.Sprite):
         self.jump_height = 22
         self.jump_is_allowed = False
         self.look_left = False
-        self.health = 100
+        self.all_health = 200
+        self.health = self.all_health
         self.points = 0
         self.keys = 0
         self.image_left = player_left
@@ -228,7 +265,6 @@ class Player(pygame.sprite.Sprite):
         self.camera_y = 0
         self.gun = gun
         self.hero_png_iteration = 0
-        self.all_health = 100
         self.got_new_gun = False
         # self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size, gun_size - 20))
         # self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size, gun_size - 20))
@@ -246,7 +282,7 @@ class Player(pygame.sprite.Sprite):
             camera_x -= 7
         elif self.rect.x + camera_x < WIDTH * 0.35:
             camera_x += 7
-        camera_y = -self.rect.y + HEIGHT * 0.1
+        camera_y = -self.rect.y + HEIGHT * 0.3
 
         if self.y > HEIGHT + 200:
             sound_gameover.play()
@@ -405,7 +441,7 @@ class Mob(pygame.sprite.Sprite):
         rand_number = random.randint(1, 4)
 
         self.shoot_x_ray()
-        if self.y > HEIGHT:
+        if self.y > HEIGHT + 1000:
             self.kill()
             self.gun.kill()
 
@@ -516,7 +552,7 @@ class Boss(Mob):
         super(Boss, self).__init__(x, y, image_left, image_right, size, gun)
         self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size, gun_size)) 
         self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size, gun_size))
-        self.all_health = 50        
+        self.all_health = 500        
         self.health = self.all_health
         self.large_coef = large_coef
         self.holding_key = False
@@ -736,7 +772,7 @@ class WeaponPistol(Weapon):
         self.bullet_speed = 30
         self.damage = 10
         self.automate = False
-        self.reload = 1000
+        self.reload = 700
         self.sound = sound_gun
 
     def prepare_bullets(self):
@@ -907,6 +943,7 @@ class Heart(pygame.sprite.Sprite):
         global heart_iteration
         self.image = heart_list[heart_iteration // 150]
         heart_iteration = (heart_iteration + 1) % (150 * len(heart_list)) 
+
 class Key(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         pygame.sprite.Sprite.__init__(self)
@@ -961,7 +998,7 @@ class Menu:
                 poverhost.blit(font.render(i[2], 1, i[3]), (i[0], i[1] + 60))
 
     def menu(self):
-        global state, state_play
+        global state, state_play, play_music_play
         igra = True
         font_menu = pygame.font.Font("super_mario_bros.otf", 50)
         pygame.key.set_repeat(0,0)
@@ -993,6 +1030,7 @@ class Menu:
                     if punkt == 0:
                         state = state_play
                         igra = False
+                        play_music_play = True
                     elif punkt == 1:
                         rules = True
                         while rules:
@@ -1142,7 +1180,7 @@ def collide(sprite1, sprite2):
 
     elif sprite1 == player and sprite2 == hearts:
         for collision in sprite2:
-            if sprite1.rect.colliderect(collision.rect) and sprite1.health <= 80:
+            if sprite1.rect.colliderect(collision.rect) and sprite1.health <= sprite1.all_health * 0.8:
                 collision.kill()
                 sprite1.add_health()
 
@@ -1223,9 +1261,9 @@ game_map = []
 gravity = 1
 state = state_start
 waiting_command = 0
-punkts =[(450, 250, "Start", (255, 255, 255), (0, 0, 0), 0),
-(460, 350, "Rules", (255, 255, 255), (0, 0, 0), 1),
-(480, 450, "Quit", (255, 255, 255), (250, 10, 50), 2)]
+punkts =[(350, 250, "Start", (255, 255, 255), (0, 0, 0), 0),
+(360, 350, "Rules", (255, 255, 255), (0, 0, 0), 1),
+(380, 450, "Quit", (255, 255, 255), (250, 10, 50), 2)]
 game = Menu(punkts)
 
 
@@ -1233,6 +1271,11 @@ done = True
 while done:
 
     if state == state_start:
+        if start_music_play:
+            pygame.mixer.music.load('sound/sound_menu.wav')
+            pygame.mixer.music.play(-1)
+            pygame.mixer.music.set_volume(0.6)
+            start_music_play = False
         camera_x = 0
         camera_y = 0
         if waiting_command < 1:
@@ -1417,6 +1460,7 @@ while done:
                         # all_sprites.add(gun)
 
             gun = WeaponPistol()
+            gun.damage = 15
             player = Player(gun)
             all_sprites.add(player)
             all_sprites.add(gun)
@@ -1425,6 +1469,18 @@ while done:
         waiting_command += 1
 
     if state == state_play:
+        if play_music_play:
+            pygame.mixer.music.load('sound/TheFatRat_Epic.mp3')
+            pygame.mixer.music.play(-1)
+            pygame.mixer.music.set_volume(0.2)
+            play_music_play = False
+
+        if boss_music_play:
+            pygame.mixer.music.load('sound/awesomeness.wav')
+            pygame.mixer.music.play(-1)
+            pygame.mixer.music.set_volume(0.3)
+            boss_music_play = False
+
         background_pos = (camera_x // 4) % WIDTH
         screen.blit(background_image, (background_pos - WIDTH, 0))
         screen.blit(background_image, (background_pos, 0))
@@ -1486,6 +1542,8 @@ while done:
                 all_sprites.add(boss1.gun)
                 all_sprites.add(boss2.gun)
                 event_blocks[key_i][1] = True
+                boss_music_play = True
+
 
             if key_i == 'key_have_been_fallen' and event_blocks[key_i][2]:
                 key1 = Key(event_blocks[key_i][0], event_blocks[key_i][1], key_list[0])
@@ -1498,6 +1556,9 @@ while done:
                 mobs.add(santa)
                 all_sprites.add(santa)
                 event_blocks[key_i][2] = False
+                santa_got_free = pygame.time.get_ticks()
+                pygame.mixer.Channel(5).play(sound_santa)
+
 
         for fanta in all_sprites:
             screen.blit(fanta.image, (fanta.rect.x + camera_x, fanta.rect.y + int(camera_y * 0.3)))
@@ -1518,6 +1579,11 @@ while done:
             sound_gameover.play()
             state = state_game_over 
 
+        if santa_got_free != 0 and pygame.time.get_ticks() - santa_got_free > 2000:
+            state = state_game_win
+            end_music_play = True
+            # pygame.mixer.music.pause()
+
     if state == state_game_over:
         pygame.mixer.music.pause()
         screen.blit(text_game_over, (50, 50))
@@ -1529,6 +1595,42 @@ while done:
                     done = False
                 if event.key == pygame.K_SPACE:
                     state = state_start
+                    start_music_play = True
+                    waiting_command = 0
+                    for sprite in all_sprites:
+                        sprite.kill()
+
+    if state == state_game_win:
+        if end_music_play:
+            pygame.mixer.music.load('sound/Jingle_Bells.wav')
+            pygame.mixer.music.play(-1)
+            pygame.mixer.music.set_volume(0.1)
+            end_music_play = False
+            got_here = pygame.time.get_ticks()
+        # pygame.mixer.Channel(1).play(sound_jingle_bells)
+        screen.blit(santa_head, ((WIDTH // 3) * 2, 10))
+        screen.blit(text_thanks_1, (300, 70))
+        screen.blit(text_thanks_2, (300, 70 + block_size // 2))
+        screen.blit(text_thanks_3, (300, 70 + 2 * block_size // 2))
+        if pygame.time.get_ticks() - got_here >= 2000:
+            screen.blit(text_the_end, (370, 70 + 5 * block_size // 2))
+        if pygame.time.get_ticks() - got_here >= 4000:
+            for i in range(len(text_authors)):
+                screen.blit(text_authors[i], (778, 500 + i * (block_size // 2)))
+            screen.blit(text_authors7, (200, HEIGHT - 30))
+            # screen.blit(text_authors8, (900, 400 + (i + 2) * (block_size // 2)))
+            screen.blit(text_esc, (1050, HEIGHT - 30))
+            screen.blit(logo, (370, 390))            
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = False
+                if event.key == pygame.K_SPACE:
+                    state = state_start
+                    start_music_play = True
                     waiting_command = 0
                     for sprite in all_sprites:
                         sprite.kill()
