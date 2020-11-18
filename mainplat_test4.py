@@ -142,7 +142,7 @@ for i in range(13):
 for i in range(13):
     santa_list_left.append(pygame.image.load(f'png/Characters/santa/walk_{i + 1}_left.png').convert_alpha())
 
-
+background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
 player_right = pygame.transform.scale(player_right, (block_size, block_size))
 player_left = pygame.transform.scale(player_left, (block_size, block_size))
 boss1_left = pygame.transform.scale(boss1_left, (block_size * 2, block_size * 2))
@@ -435,8 +435,6 @@ class Mob(pygame.sprite.Sprite):
                 self.v_speed -= self.jump_height
                 self.jump_is_allowed = False
 
-            # elif self.path == []:
-                # pass
             else:
                 self.path.pop(0)
 
@@ -752,7 +750,7 @@ class WeaponShotgun(Weapon):
         self.image_left = shotgun_left
         self.image_right = shotgun_right
         self.bullet_speed = 50
-        self.damage = 5
+        self.damage = 10
         self.automate = False
         self.reload = 1000
         self.sound = sound_shotgun
@@ -823,6 +821,7 @@ class Block(pygame.sprite.Sprite):
         self.have_money = False
         self.counter_for_text = 0
         self.start_counting = False
+        self.gun = -1
 
     def shoot(self):
         bullet = Bullet(self.rect.centerx - block_size, self.rect.centery, WeaponPistol())
@@ -843,7 +842,7 @@ class Block(pygame.sprite.Sprite):
                     self.active = False
                     player.points -= 60
                     player.gun.kill()
-                    gun = WeaponMachineGun()
+                    gun = self.gun
                     all_sprites.add(gun)
                     player.add_gun(gun)
                     player.got_new_gun = True
@@ -968,8 +967,9 @@ class Menu:
         pygame.key.set_repeat(0,0)
         pygame.mouse.set_visible(True)
         punkt = 0
-        background_rules = pygame.image.load("png/BG/BG_Rules2.png")
+        background_rules = pygame.image.load("png/BG/BG_Rules.png")
         while igra:
+            window.fill((0, 100, 0))
             window.blit(background_image, (0, 0))
             screen.blit(window, (0, 0))
             mp = pygame.mouse.get_pos()   # learn
@@ -1231,13 +1231,12 @@ game = Menu(punkts)
 
 done = True
 while done:
-    screen.blit(background_image, (0,0))
 
     if state == state_start:
+        camera_x = 0
+        camera_y = 0
         if waiting_command < 1:
             # camera variables
-            camera_x = 0
-            camera_y = 0
 
             # stable coordinates of the window
             stable_x = 0
@@ -1362,9 +1361,16 @@ while done:
                         coin1 = Coin(block_size * j + coin_size//2, block_size * i + coin_size//2, coins_list[0])
                         coins.add(coin1)
                         all_sprites.add(coin1)
+                    if game_map[i][j] == 'U':
+                        case1 = Block(block_size*j, block_size * i, case)
+                        case1.active = True
+                        case1.gun = WeaponShotgun()
+                        strong_boxes.add(case1)
+                        all_sprites.add(case1)
                     if game_map[i][j] == 'S':
                         case1 = Block(block_size*j, block_size * i, case)
                         case1.active = True
+                        case1.gun = WeaponMachineGun()
                         strong_boxes.add(case1)
                         all_sprites.add(case1)
                     if game_map[i][j] == 'h':
@@ -1419,6 +1425,9 @@ while done:
         waiting_command += 1
 
     if state == state_play:
+        background_pos = (camera_x // 4) % WIDTH
+        screen.blit(background_image, (background_pos - WIDTH, 0))
+        screen.blit(background_image, (background_pos, 0))
         # print(player.rect.y, player.y)
         sound_gameover.stop()
         pygame.mixer.music.unpause()
