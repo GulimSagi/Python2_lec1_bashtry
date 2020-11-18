@@ -968,20 +968,21 @@ class Menu:
         pygame.key.set_repeat(0,0)
         pygame.mouse.set_visible(True)
         punkt = 0
+        background_rules = pygame.image.load("png/BG/BG_Rules.png")
         while igra:
-            window.fill((0,100,200))
-
+            window.fill((0, 100, 0))
+            window.blit(background_image, (0, 0))
+            screen.blit(window, (0, 0))
             mp = pygame.mouse.get_pos()   # learn
             for i in self.punkts:
                 if mp[0] > i[0] and mp[0] < i[0] + 155 and mp[1] > i[1] and mp[1] > i[1] + 50: # learn
                     punkt = i[5]
             self.render(window, font_menu, punkt)
-
             for i in pygame.event.get():
                 if i.type == pygame.QUIT:
                     sys.exit()
-                if i.type == pygame.KEYDOWN:    # learn
-                    if i.key == pygame.K_ESCAPE:    # learn
+                if i.type == pygame.KEYDOWN:    
+                    if i.key == pygame.K_ESCAPE:    
                         sys.exit()
                     if i.key == pygame.K_UP:
                         if punkt > 0:
@@ -994,7 +995,16 @@ class Menu:
                         state = state_play
                         igra = False
                     elif punkt == 1:
-                        sys.exit()
+                        rules = True
+                        while rules:
+                            screen.blit(background_rules, (0, 0))
+                            pygame.display.flip()
+                            for j in pygame.event.get():
+                                if j.type == pygame.KEYDOWN:    
+                                    if j.key == pygame.K_ESCAPE:  
+                                        sys.exit()
+                    elif punkt == 2:
+                        sys.exit()       
             screen.blit(window, (0, 0))
             pygame.display.flip()
 
@@ -1213,8 +1223,9 @@ game_map = []
 gravity = 1
 state = state_start
 waiting_command = 0
-punkts =[(450, 250, "Start", (250, 250, 30), (250, 30, 250), 0),
-(480, 350, "Quit", (250, 250, 30), (250, 30, 250), 1)]
+punkts =[(450, 250, "Start", (255, 255, 255), (0, 0, 0), 0),
+(460, 350, "Rules", (255, 255, 255), (0, 0, 0), 1),
+(480, 450, "Quit", (255, 255, 255), (250, 10, 50), 2)]
 game = Menu(punkts)
 
 
