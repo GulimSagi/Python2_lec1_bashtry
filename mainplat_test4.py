@@ -1002,7 +1002,8 @@ class Menu:
                             for j in pygame.event.get():
                                 if j.type == pygame.KEYDOWN:    
                                     if j.key == pygame.K_ESCAPE:  
-                                        sys.exit()
+                                        rules = False
+                                        break
                     elif punkt == 2:
                         sys.exit()       
             screen.blit(window, (0, 0))
