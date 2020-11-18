@@ -94,12 +94,16 @@ shotgun_left = pygame.image.load('png/Weapon/shotgun_left.png').convert_alpha()
 shotgun_right = pygame.image.load('png/Weapon/shotgun_right.png').convert_alpha()
 machine_gun_right = pygame.image.load('png/Weapon/machine_gun_right.png').convert_alpha()
 machine_gun_left = pygame.image.load('png/Weapon/machine_gun_left.png').convert_alpha()
+santa_stay_left = pygame.image.load('png/Characters/santa/stay_left.png').convert_alpha()
+santa_stay_right = pygame.image.load('png/Characters/santa/stay_right.png').convert_alpha()
 coins_list=[pygame.image.load('png/Object/coins/coin1.png').convert_alpha(),
        pygame.image.load('png/Object/coins/coin2.png').convert_alpha(),
        pygame.image.load('png/Object/coins/coin3.png').convert_alpha(),
        pygame.image.load('png/Object/coins/coin4.png').convert_alpha(),
        pygame.image.load('png/Object/coins/coin5.png').convert_alpha()]
 
+santa_list_left = []
+santa_list_right = []
 enemy_list_left = []
 enemy_list_right = []
 enemy_stay_left = pygame.image.load('png/Characters/enemy/stay_left.png').convert_alpha()
@@ -117,6 +121,11 @@ for i in range(10):
     enemy_list_right.append(pygame.image.load(f'png/Characters/enemy/walk_rigint_{i + 1}.png').convert_alpha())
 for i in range(10):
     enemy_list_left.append(pygame.image.load(f'png/Characters/enemy/walk_left_{i + 1}.png').convert_alpha())
+for i in range(13):
+    santa_list_right.append(pygame.image.load(f'png/Characters/santa/walk_{i + 1}.png').convert_alpha())
+for i in range(13):
+    santa_list_left.append(pygame.image.load(f'png/Characters/santa/walk_{i + 1}_left.png').convert_alpha())
+
 
 
 player_right = pygame.transform.scale(player_right, (block_size, block_size))
@@ -151,6 +160,8 @@ machine_gun_left = pygame.transform.scale(machine_gun_left, (gun_size, gun_size/
 machine_gun_right = pygame.transform.scale(machine_gun_right, (gun_size, gun_size//2))
 enemy_stay_left = pygame.transform.scale(enemy_stay_left, (block_size, block_size))
 enemy_stay_right = pygame.transform.scale(enemy_stay_right, (block_size, block_size))
+santa_stay_left = pygame.transform.scale(santa_stay_left, (block_size, block_size))
+santa_stay_right = pygame.transform.scale(santa_stay_right, (block_size, block_size))
 
 for i in range(len(coins_list)):
     coins_list[i]=pygame.transform.scale(coins_list[i], (coin_size, coin_size))
@@ -158,6 +169,9 @@ case = pygame.transform.scale(case,(block_size,block_size))
 for i in range(len(enemy_list_left)):
     enemy_list_left[i] = pygame.transform.scale(enemy_list_left[i], (block_size, block_size))
     enemy_list_right[i] = pygame.transform.scale(enemy_list_right[i], (block_size, block_size))
+for i in range(len(santa_list_left)):
+    santa_list_left[i] = pygame.transform.scale(santa_list_left[i], (block_size, block_size))
+    santa_list_right[i] = pygame.transform.scale(santa_list_right[i], (block_size, block_size))
 for i in range(len(heart_list)):
     heart_list[i]=pygame.transform.scale(heart_list[i], (coin_size, coin_size))
 for i in range(len(key_list)):
@@ -477,7 +491,7 @@ class Boss(Mob):
         super(Boss, self).__init__(x, y, image_left, image_right, size, gun)
         self.gun.image_left = pygame.transform.scale(self.gun.image_left, (gun_size, gun_size)) 
         self.gun.image_right = pygame.transform.scale(self.gun.image_right, (gun_size, gun_size))
-        self.all_health = 500        
+        self.all_health = 500      
         self.health = self.all_health
         self.large_coef = large_coef
         self.holding_key = False
@@ -560,6 +574,112 @@ class Boss(Mob):
             self.gun.image = self.gun.image_left
             self.gun.look_left = True
 
+
+        self.x = self.rect.x
+        self.y = self.rect.y
+        self.rect.x += self.h_speed
+        self.rect.y += self.v_speed
+        self.trigger_old = self.trigger
+
+
+class Santa(Mob):
+    def __init__(self, x, y, image_left, image_right, size, gun):
+        super(Santa, self).__init__(x, y, image_left, image_right, size, gun)
+        self.image_left = image_left
+        self.image_right = image_right
+        self.gun.image_left = transparent_piece 
+        self.gun.image_right = transparent_piece
+        self.santa_png_iteration = 0
+
+    def update(self):
+        global gravity, state, state_game_over
+        rand_number = random.randint(1, 4)
+
+        self.shoot_x_ray()
+        if self.y > HEIGHT:
+            self.kill()
+            self.gun.kill()
+
+        self.h_speed = 0
+        self.v_speed = self.v_speed + gravity
+
+        if self.v_speed > 25:
+            self.v_speed = 25
+
+        if abs(self.rect.x - player.rect.x) < block_size:
+            self.h_speed = 0
+            if self.look_left:
+                self.image = self.image_left
+            else:
+                self.image = self.image_right
+
+        else:
+            if self.trigger and self.trigger_general:
+                projection = player.rect.x - self.rect.x
+                self.h_speed = rand_number if bool(projection >= 0) else -rand_number
+                # if pygame.time.get_ticks() - self.time_shoot >= self.gun.reload:
+                    # self.shoot()
+                    # self.time_shoot = pygame.time.get_ticks()
+                self.path = []
+
+            if self.trigger == False and self.trigger_old == True:
+                self.path.append((player.rect.x, player.rect.y))
+
+            if self.trigger == False and self.trigger_general == True:
+                self.path.append((player.rect.x, player.rect.y))
+                if self.path != [] and self.rect.x != self.path[0][0] and self.rect.y != self.path[0][1]:
+                    projection = self.path[0][0] - self.rect.x
+                    self.h_speed = rand_number if bool(projection >= 0) else -rand_number
+                elif self.path != [] and self.rect.x == self.path[0][0] and self.rect.y > self.path[0][1] and self.jump_is_allowed:
+                    self.v_speed -= self.jump_height
+                    self.jump_is_allowed = False
+
+                # elif self.path == []:
+                    # pass
+                else:
+                    self.path.pop(0)
+
+
+            if self.trigger == False and self.trigger_general == False:
+                if self.cycle >= 0:
+                    self.h_speed = 2 if bool(self.change) else -2
+                    self.cycle -= 1
+                else:
+                    self.cycle = 130
+                    self.change = (self.change + 1) % 2
+
+            if self.collided_with_block and self.jump_is_allowed:
+                self.v_speed -= self.jump_height
+                self.jump_is_allowed = False
+
+            if self.h_speed > 0:
+                self.image = santa_list_right[self.santa_png_iteration // 3]
+                self.gun.rect.centerx = self.rect.centerx + 25
+                self.gun.rect.centery = self.rect.centery
+                self.gun.image = self.gun.image_right
+                self.gun.look_left = False
+                self.look_left = False
+            elif self.h_speed < 0:
+                self.image = santa_list_left[self.santa_png_iteration // 3]
+                self.gun.rect.centerx = self.rect.centerx - 45
+                self.gun.rect.centery = self.rect.centery
+                self.gun.image = self.gun.image_left
+                self.gun.look_left = True
+                self.look_left = True
+            elif self.h_speed == 0 and not self.look_left:
+                self.image = self.image_right
+                self.gun.rect.centerx = self.rect.centerx + 25
+                self.gun.rect.centery = self.rect.centery
+                self.gun.image = self.gun.image_left
+                self.gun.look_left = False
+            elif self.h_speed == 0 and self.look_left:
+                self.image = self.image_left
+                self.gun.rect.centerx = self.rect.centerx - 45
+                self.gun.rect.centery = self.rect.centery
+                self.gun.image = self.gun.image_left
+                self.gun.look_left = True
+
+            self.santa_png_iteration = (self.santa_png_iteration + 1) % (3 * len(santa_list_right))
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -731,10 +851,12 @@ class Door(pygame.sprite.Sprite):
         self.jump = False
 
     def check_key(self):
+        global event_blocks
         if player.keys == 1:
             sound_new_level.play()
             self.image = opened_door
             player.keys -= 1
+            event_blocks['free_Santa'] = [self.rect.x, self.rect.y, True]
 
 class Coin(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
@@ -1072,6 +1194,8 @@ game = Menu(punkts)
 
 done = True
 while done:
+    # print(santa_list_left[0] == santa_list_left[1])
+    
     screen.blit(background_image, (0,0))
 
     if state == state_start:
@@ -1136,6 +1260,10 @@ while done:
                         tramp1.jump = True
                         blocks.add(tramp1)
                         all_sprites.add(tramp1)
+                    # if game_map[i][j] == 'S':
+                        # santa = Santa(block_size * j, block_size * i, santa_stay_left, santa_stay_right, block_size, WeaponPistol())
+                        # mobs.add(santa)
+                        # all_sprites.add(santa)
                     if game_map[i][j] == 's':
                         event_blocks['boss'] = [block_size * j, False]
 
@@ -1235,6 +1363,12 @@ while done:
                 keys.add(key1)
                 all_sprites.add(key1)
                 event_blocks[key_i][2] = False 
+
+            if key_i == 'free_Santa' and event_blocks[key_i][2]:
+                santa = Santa(event_blocks[key_i][0], event_blocks[key_i][1], santa_stay_left, santa_stay_right, block_size, WeaponPistol())
+                mobs.add(santa)
+                all_sprites.add(santa)
+                event_blocks[key_i][2] = False
 
         for fanta in all_sprites:
             screen.blit(fanta.image, (fanta.rect.x + camera_x, fanta.rect.y + int(camera_y * 0.3)))
